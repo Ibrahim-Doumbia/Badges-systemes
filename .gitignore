@@ -1,0 +1,75 @@
+# =========================
+# NODE MODULES
+# =========================
+node_modules/
+
+# =========================
+# ENV FILES (secrets)
+# =========================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =========================
+# LOGS
+# =========================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# OS FILES
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# EDITOR FILES
+# =========================
+.vscode/
+.idea/
+*.swp
+
+# =========================
+# BUILD / DIST
+# =========================
+dist/
+build/
+
+# =========================
+# COVERAGE
+# =========================
+coverage/
+
+# =========================
+# TEMP FILES
+# =========================
+tmp/
+temp/
+
+# =========================
+# DATABASE
+# =========================
+*.sqlite
+*.db
+
+# =========================
+# CACHE
+# =========================
+.cache/
+.parcel-cache/
+
+# =========================
+# TEST OUTPUT
+# =========================
+jest-html-reporters-*.html
+
+# =========================
+# SEQUELIZE
+# =========================
+sequelize-meta.json
