@@ -19,8 +19,6 @@ const Role = sequelize.define(
     name: {
       type: DataTypes.ENUM("admin", "staff"),
       allowNull: false,
-      unique: true,
-      comment: "Rôle système : admin ou staff",
     },
     description: {
       type: DataTypes.STRING,
@@ -30,6 +28,7 @@ const Role = sequelize.define(
   {
     tableName: "roles",
     timestamps: true,
+    indexes: [{ unique: true, fields: ["name"] }],
   }
 );
 

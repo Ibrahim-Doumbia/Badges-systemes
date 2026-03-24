@@ -17,7 +17,6 @@ const EventType = sequelize.define(
     name: {
       type: DataTypes.ENUM("conference", "formation", "salon", "atelier"),
       allowNull: false,
-      unique: true,
     },
     label: {
       type: DataTypes.STRING,
@@ -32,6 +31,7 @@ const EventType = sequelize.define(
   {
     tableName: "event_types",
     timestamps: true,
+    indexes: [{ unique: true, fields: ["name"] }],
   }
 );
 
