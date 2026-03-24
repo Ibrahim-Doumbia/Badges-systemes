@@ -15,6 +15,6 @@ router.post("/", requireRole("admin"), UserController.create);
 router.get("/", requireRole("admin"), UserController.getAll);
 router.get("/:id", requireRole("admin"), UserController.getOne);
 router.put("/:id", requireRole("admin"), UserController.update);
-router.delete("/:id", requireRole("admin"), UserController.delete);
+router.patch("/:id", requireRole("admin"), UserController.desactive);
 
 module.exports = router;

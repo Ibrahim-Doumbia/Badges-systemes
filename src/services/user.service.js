@@ -112,7 +112,7 @@ class UserService {
   /**
    * Désactive un compte utilisateur (soft delete).
    */
-  static async deleteUser(id) {
+  static async desactiveUser(id) {
     const user = await User.findByPk(id);
     if (!user) throw new Error("Utilisateur introuvable");
     await user.update({ isActive: false });

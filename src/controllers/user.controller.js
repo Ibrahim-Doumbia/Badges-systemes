@@ -46,9 +46,9 @@ class UserController {
     }
   }
 
-  static async delete(req, res) {
+  static async desactive(req, res) {
     try {
-      const result = await UserService.deleteUser(req.params.id);
+      const result = await UserService.desactiveUser(req.params.id);
       return success(res, result, "Utilisateur désactivé");
     } catch (err) {
       return error(res, err.message, 404);
