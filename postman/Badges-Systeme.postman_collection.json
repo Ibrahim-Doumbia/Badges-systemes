@@ -1,0 +1,1010 @@
+{
+  "info": {
+    "name": "Badges Système API",
+    "description": "Collection complète pour tester l'API de gestion d'événements et de badges QR Code.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api" },
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "eventTypeId", "value": "" },
+    { "key": "eventId", "value": "" },
+    { "key": "dayId", "value": "" },
+    { "key": "categoryId", "value": "" },
+    { "key": "roleId", "value": "" },
+    { "key": "teamMemberId", "value": "" },
+    { "key": "participantId", "value": "" },
+    { "key": "inscriptionId", "value": "" },
+    { "key": "badgeId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentification",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Token présent', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data.token).to.be.a('string');",
+                  "  pm.collectionVariables.set('token', body.data.token);",
+                  "  console.log('Token enregistré :', body.data.token.substring(0,30) + '...');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Changer le mot de passe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"Password123!\",\n  \"newPassword\": \"NouveauMotDePasse1!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/change-password", "host": ["{{baseUrl}}"], "path": ["auth", "change-password"] }
+          }
+        },
+        {
+          "name": "Mon profil (me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Pas de mot de passe dans la réponse', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data).to.not.have.property('password');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Utilisateurs",
+      "item": [
+        {
+          "name": "Créer un utilisateur",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('ID enregistré', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data.id).to.be.a('string');",
+                  "  pm.collectionVariables.set('userId', body.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Dupont\",\n  \"prenom\": \"Jean\",\n  \"email\": \"jean.dupont@example.com\",\n  \"password\": \"Password123!\",\n  \"role_id\": \"<UUID_DU_ROLE_STAFF>\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] }
+          }
+        },
+        {
+          "name": "Lister les utilisateurs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Pagination présente', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.pagination).to.have.property('total');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/users?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Récupérer un utilisateur",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "Modifier un utilisateur",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Dupont\",\n  \"prenom\": \"Jean-Pierre\",\n  \"email\": \"jp.dupont@example.com\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "Désactiver un utilisateur",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Types d'événement",
+      "item": [
+        {
+          "name": "Créer un type d'événement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('ID enregistré', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('eventTypeId', body.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"conference\",\n  \"label\": \"Conférence\",\n  \"description\": \"Événement de type conférence\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/event-types", "host": ["{{baseUrl}}"], "path": ["event-types"] }
+          }
+        },
+        {
+          "name": "Lister les types d'événements",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/event-types?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["event-types"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Récupérer un type d'événement",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/event-types/{{eventTypeId}}", "host": ["{{baseUrl}}"], "path": ["event-types", "{{eventTypeId}}"] }
+          }
+        },
+        {
+          "name": "Modifier un type d'événement",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"conference\",\n  \"label\": \"Grande Conférence\",\n  \"description\": \"Description mise à jour\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/event-types/{{eventTypeId}}", "host": ["{{baseUrl}}"], "path": ["event-types", "{{eventTypeId}}"] }
+          }
+        },
+        {
+          "name": "Supprimer un type d'événement",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/event-types/{{eventTypeId}}", "host": ["{{baseUrl}}"], "path": ["event-types", "{{eventTypeId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Événements",
+      "item": [
+        {
+          "name": "Créer un événement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('ID enregistré', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('eventId', body.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"DevFest 2025\",\n  \"description\": \"La grande conférence développeurs de l'année\",\n  \"start_date\": \"2025-06-01\",\n  \"end_date\": \"2025-06-03\",\n  \"lieu\": \"Palais des congrès, Yaoundé\",\n  \"event_type_id\": \"{{eventTypeId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/events", "host": ["{{baseUrl}}"], "path": ["events"] }
+          }
+        },
+        {
+          "name": "Lister les événements",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/events?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "event_type_id", "value": "", "disabled": true },
+                { "key": "isActive", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Récupérer un événement",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}"] }
+          }
+        },
+        {
+          "name": "Modifier un événement",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"DevFest 2025 — Édition spéciale\",\n  \"start_date\": \"2025-06-01\",\n  \"end_date\": \"2025-06-04\",\n  \"event_type_id\": \"{{eventTypeId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}"] }
+          }
+        },
+        {
+          "name": "Supprimer un événement",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📆 Jours d'événement",
+      "item": [
+        {
+          "name": "Ajouter un jour",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('ID enregistré', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('dayId', body.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2025-06-01\",\n  \"heure_debut\": \"09:00:00\",\n  \"heure_fin\": \"18:00:00\",\n  \"lieu\": \"Salle A\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/days", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "days"] }
+          }
+        },
+        {
+          "name": "Lister les jours",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/days", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "days"] }
+          }
+        },
+        {
+          "name": "Récupérer un jour",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/days/{{dayId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "days", "{{dayId}}"] }
+          }
+        },
+        {
+          "name": "Modifier un jour",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2025-06-01\",\n  \"heure_debut\": \"08:30:00\",\n  \"heure_fin\": \"17:30:00\",\n  \"lieu\": \"Salle B\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/days/{{dayId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "days", "{{dayId}}"] }
+          }
+        },
+        {
+          "name": "Supprimer un jour",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/days/{{dayId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "days", "{{dayId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏷️ Catégories",
+      "item": [
+        {
+          "name": "Créer une catégorie",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('ID enregistré', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('categoryId', body.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"VIP\",\n  \"description\": \"Accès complet + networking\",\n  \"price\": 50000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/categories", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "categories"] }
+          }
+        },
+        {
+          "name": "Lister les catégories",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/categories", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "categories"] }
+          }
+        },
+        {
+          "name": "Récupérer une catégorie",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/categories/{{categoryId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "categories", "{{categoryId}}"] }
+          }
+        },
+        {
+          "name": "Modifier une catégorie",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"VIP Premium\",\n  \"description\": \"Accès complet + networking + dîner de gala\",\n  \"price\": 75000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/categories/{{categoryId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "categories", "{{categoryId}}"] }
+          }
+        },
+        {
+          "name": "Supprimer une catégorie",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/categories/{{categoryId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "categories", "{{categoryId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎭 Rôles d'événement",
+      "item": [
+        {
+          "name": "Créer un rôle",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('ID enregistré', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('roleId', body.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Coordinateur\",\n  \"description\": \"Responsable de la coordination générale de l'événement\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/roles", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "roles"] }
+          }
+        },
+        {
+          "name": "Lister les rôles",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/roles", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "roles"] }
+          }
+        },
+        {
+          "name": "Récupérer un rôle",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/roles/{{roleId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "roles", "{{roleId}}"] }
+          }
+        },
+        {
+          "name": "Modifier un rôle",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Coordinateur Principal\",\n  \"description\": \"Responsable général de l'organisation\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/roles/{{roleId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "roles", "{{roleId}}"] }
+          }
+        },
+        {
+          "name": "Supprimer un rôle",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/roles/{{roleId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "roles", "{{roleId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Équipe événement",
+      "item": [
+        {
+          "name": "Assigner un membre",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('ID enregistré', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('teamMemberId', body.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{userId}}\",\n  \"event_role_id\": \"{{roleId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/team", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "team"] }
+          }
+        },
+        {
+          "name": "Lister l'équipe",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{eventId}}/team?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{eventId}}", "team"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Changer le rôle d'un membre",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_role_id\": \"{{roleId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/team/{{teamMemberId}}/role", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "team", "{{teamMemberId}}", "role"] }
+          }
+        },
+        {
+          "name": "Retirer un membre",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/events/{{eventId}}/team/{{teamMemberId}}", "host": ["{{baseUrl}}"], "path": ["events", "{{eventId}}", "team", "{{teamMemberId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🙋 Participants",
+      "item": [
+        {
+          "name": "Créer un participant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('ID enregistré', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('participantId', body.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Kamga\",\n  \"prenom\": \"Alice\",\n  \"email\": \"alice.kamga@example.com\",\n  \"telephone\": \"+237 6XX XXX XXX\",\n  \"fonction\": \"Ingénieure logicielle\",\n  \"organisation\": \"TechCorp SA\",\n  \"localite\": \"Douala\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/participants", "host": ["{{baseUrl}}"], "path": ["participants"] }
+          }
+        },
+        {
+          "name": "Lister les participants",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/participants?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["participants"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Récupérer un participant",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}"] }
+          }
+        },
+        {
+          "name": "Modifier un participant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Kamga\",\n  \"prenom\": \"Alice\",\n  \"email\": \"alice.kamga@example.com\",\n  \"fonction\": \"Lead Ingénieure\",\n  \"organisation\": \"TechCorp SA\",\n  \"localite\": \"Yaoundé\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}"] }
+          }
+        },
+        {
+          "name": "Supprimer un participant",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/participants/{{participantId}}", "host": ["{{baseUrl}}"], "path": ["participants", "{{participantId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 Inscriptions",
+      "item": [
+        {
+          "name": "Créer une inscription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('ID enregistré + statut pending', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data.statut).to.equal('pending');",
+                  "  pm.collectionVariables.set('inscriptionId', body.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"participant_id\": \"{{participantId}}\",\n  \"event_id\": \"{{eventId}}\",\n  \"category_id\": \"{{categoryId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/inscriptions", "host": ["{{baseUrl}}"], "path": ["inscriptions"] }
+          }
+        },
+        {
+          "name": "Lister les inscriptions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/inscriptions?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["inscriptions"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "event_id", "value": "{{eventId}}", "disabled": true },
+                { "key": "statut", "value": "pending", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Récupérer une inscription",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/inscriptions/{{inscriptionId}}", "host": ["{{baseUrl}}"], "path": ["inscriptions", "{{inscriptionId}}"] }
+          }
+        },
+        {
+          "name": "Confirmer une inscription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Statut confirmed', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data.statut).to.equal('confirmed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statut\": \"confirmed\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/inscriptions/{{inscriptionId}}/status", "host": ["{{baseUrl}}"], "path": ["inscriptions", "{{inscriptionId}}", "status"] }
+          }
+        },
+        {
+          "name": "Annuler une inscription",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statut\": \"cancelled\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/inscriptions/{{inscriptionId}}/status", "host": ["{{baseUrl}}"], "path": ["inscriptions", "{{inscriptionId}}", "status"] }
+          }
+        },
+        {
+          "name": "Supprimer une inscription",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/inscriptions/{{inscriptionId}}", "host": ["{{baseUrl}}"], "path": ["inscriptions", "{{inscriptionId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎫 Badges",
+      "item": [
+        {
+          "name": "Générer un badge manuellement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('QR Code présent + ID enregistré', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data.qr_code).to.be.a('string');",
+                  "  pm.expect(body.data.statut).to.equal('generated');",
+                  "  pm.collectionVariables.set('badgeId', body.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/badges/generate/{{inscriptionId}}", "host": ["{{baseUrl}}"], "path": ["badges", "generate", "{{inscriptionId}}"] }
+          }
+        },
+        {
+          "name": "Lister les badges",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/badges?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["badges"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "statut", "value": "generated", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Récupérer un badge",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/badges/{{badgeId}}", "host": ["{{baseUrl}}"], "path": ["badges", "{{badgeId}}"] }
+          }
+        },
+        {
+          "name": "Marquer comme imprimé",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Statut printed', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data.statut).to.equal('printed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/badges/{{badgeId}}/print", "host": ["{{baseUrl}}"], "path": ["badges", "{{badgeId}}", "print"] }
+          }
+        },
+        {
+          "name": "Régénérer un badge",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Statut remis à generated', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data.statut).to.equal('generated');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/badges/{{badgeId}}/regenerate", "host": ["{{baseUrl}}"], "path": ["badges", "{{badgeId}}", "regenerate"] }
+          }
+        }
+      ]
+    }
+  ]
+}

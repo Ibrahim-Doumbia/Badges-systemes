@@ -8,6 +8,8 @@ const express = require("express");
 const cors = require("cors");
 const routes = require("./routes");
 const { error } = require("./utils/response.util");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./config/swagger");
 
 const app = express();
 
@@ -27,6 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 // ─── Routes ──────────────────────────────────────────────────────────────────
 app.use("/api", routes);
 
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Route de santé (health check) — accessible sans auth
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
