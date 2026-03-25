@@ -318,7 +318,7 @@ const options = {
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: ["./src/routes/*.js"],
+  apis: [require.resolve("../routes/*.js")],
 };
 
 module.exports = swaggerJsdoc(options);
