@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router({ mergeParams: true });
 const CategoryController = require("../controllers/category.controller");
-const { authenticate, mustChangePwd, requireRole } = require("../middlewares/auth.middleware");
+const { authenticate, mustChangePwd, requireAdminOrEventOwner } = require("../middlewares/auth.middleware");
 
 router.use(authenticate, mustChangePwd);
 
@@ -55,7 +55,7 @@ router.use(authenticate, mustChangePwd);
  *       403:
  *         description: Accès refusé — rôle admin requis
  */
-router.post("/", requireRole("admin"), CategoryController.create);
+router.post("/", requireAdminOrEventOwner, CategoryController.create);
 
 /**
  * @swagger
@@ -191,7 +191,7 @@ router.get("/:id", CategoryController.getOne);
  *       404:
  *         description: Catégorie introuvable
  */
-router.put("/:id", requireRole("admin"), CategoryController.update);
+router.put("/:id", requireAdminOrEventOwner, CategoryController.update);
 
 /**
  * @swagger
@@ -230,6 +230,6 @@ router.put("/:id", requireRole("admin"), CategoryController.update);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete("/:id", requireRole("admin"), CategoryController.delete);
+router.delete("/:id", requireAdminOrEventOwner, CategoryController.delete);
 
 module.exports = router;

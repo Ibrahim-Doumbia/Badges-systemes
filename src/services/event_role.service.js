@@ -16,6 +16,7 @@ const { EventRole, Event, UserEvent, User } = require("../models");
 
 // Liste des rôles créés automatiquement pour chaque nouvel événement
 const DEFAULT_ROLES = [
+  { name: "Organisateur",   description: "Créateur et responsable principal de l'événement" },
   { name: "Coordinateur",   description: "Responsable de la coordination générale de l'événement" },
   { name: "Accueil",        description: "Gestion de l'accueil et de l'enregistrement des participants" },
   { name: "Sécurité",       description: "Contrôle des accès et sécurité du site" },

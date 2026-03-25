@@ -17,7 +17,7 @@ const Role = sequelize.define(
       primaryKey: true,
     },
     name: {
-      type: DataTypes.ENUM("admin", "staff"),
+      type: DataTypes.ENUM("admin", "staff", "organisateur"),
       allowNull: false,
     },
     description: {

@@ -48,7 +48,7 @@ router.use(authenticate, mustChangePwd);
  *       403:
  *         description: Accès refusé — rôle admin ou staff requis
  */
-router.post("/", requireRole(["admin", "staff"]), InscriptionController.create);
+router.post("/", requireRole(["admin", "staff", "organisateur"]), InscriptionController.create);
 
 /**
  * @swagger
@@ -181,7 +181,7 @@ router.get("/:id", InscriptionController.getOne);
  *       404:
  *         description: Inscription introuvable
  */
-router.patch("/:id/status", requireRole(["admin", "staff"]), InscriptionController.updateStatus);
+router.patch("/:id/status", requireRole(["admin", "staff", "organisateur"]), InscriptionController.updateStatus);
 
 /**
  * @swagger
@@ -214,6 +214,6 @@ router.patch("/:id/status", requireRole(["admin", "staff"]), InscriptionControll
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete("/:id", requireRole("admin"), InscriptionController.delete);
+router.delete("/:id", requireRole(["admin", "organisateur"]), InscriptionController.delete);
 
 module.exports = router;

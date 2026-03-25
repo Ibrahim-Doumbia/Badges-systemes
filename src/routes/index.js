@@ -23,6 +23,10 @@ const participantRoutes = require("./participant.routes");
 const inscriptionRoutes = require("./inscription.routes");
 const badgeRoutes       = require("./badge.routes");
 const userEventRoutes   = require("./user_event.routes");
+const publicRoutes      = require("./public.routes");
+
+// ─── Routes publiques (sans authentification) ────────────────────────────────
+router.use("/public",       publicRoutes);
 
 // ─── Routes principales ───────────────────────────────────────────────────────
 router.use("/auth",         authRoutes);

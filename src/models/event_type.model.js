@@ -15,7 +15,7 @@ const EventType = sequelize.define(
       primaryKey: true,
     },
     name: {
-      type: DataTypes.ENUM("conference", "formation", "salon", "atelier"),
+      type: DataTypes.ENUM("conference", "formation", "salon", "atelier", "concert"),
       allowNull: false,
     },
     label: {

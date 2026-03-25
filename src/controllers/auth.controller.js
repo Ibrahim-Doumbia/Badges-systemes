@@ -23,6 +23,20 @@ class AuthController {
   }
 
   /**
+   * POST /api/auth/register
+   * Inscription publique — crée un compte avec le rôle "organisateur".
+   */
+  static async register(req, res) {
+    try {
+      const { nom, prenom, email, password } = req.body;
+      const result = await AuthService.register({ nom, prenom, email, password });
+      return success(res, result, "Inscription réussie", 201);
+    } catch (err) {
+      return error(res, err.message, 400);
+    }
+  }
+
+  /**
    * PUT /api/auth/change-password
    * Change le mot de passe. Accessible même si mustChangePassword = true.
    */

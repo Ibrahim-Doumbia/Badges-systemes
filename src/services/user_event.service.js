@@ -39,6 +39,11 @@ class UserEventService {
       throw new Error("Ce rôle n'appartient pas à cet événement");
     }
 
+    // L'organisateur (créateur de l'événement) ne peut pas être assigné comme staff
+    if (event.created_by === user_id) {
+      throw new Error("L'organisateur de l'événement ne peut pas être assigné comme membre du staff");
+    }
+
     // Un utilisateur ne peut être assigné qu'une seule fois par événement
     const existing = await UserEvent.findOne({ where: { user_id, event_id } });
     if (existing) throw new Error("Cet utilisateur est déjà dans l'équipe de cet événement");

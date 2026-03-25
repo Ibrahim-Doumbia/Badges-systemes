@@ -7,7 +7,7 @@
  */
 
 const jwt = require("jsonwebtoken");
-const { User, Role } = require("../models");
+const { User, Role, Event } = require("../models");
 const { error } = require("../utils/response.util");
 
 /**
@@ -86,4 +86,29 @@ const requireRole = (roles) => {
   };
 };
 
-module.exports = { authenticate, mustChangePwd, requireRole };
+/**
+ * Middleware d'autorisation : admin ou organisateur de l'événement.
+ * Accès accordé si l'utilisateur est admin OU s'il est le créateur de l'événement.
+ * Fonctionne pour les routes /events/:id et les routes imbriquées /events/:eventId/...
+ */
+const requireAdminOrEventOwner = async (req, res, next) => {
+  try {
+    if (req.user.role.name === "admin") return next();
+
+    const eventId = req.params.id || req.params.eventId;
+    if (!eventId) return error(res, "Identifiant d'événement manquant", 400);
+
+    const event = await Event.findByPk(eventId);
+    if (!event) return error(res, "Événement introuvable", 404);
+
+    if (event.created_by !== req.user.id) {
+      return error(res, "Accès refusé : vous n'êtes pas l'organisateur de cet événement", 403);
+    }
+
+    next();
+  } catch (err) {
+    return error(res, "Erreur de vérification des droits", 500);
+  }
+};
+
+module.exports = { authenticate, mustChangePwd, requireRole, requireAdminOrEventOwner };

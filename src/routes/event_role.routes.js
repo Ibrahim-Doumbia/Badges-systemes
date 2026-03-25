@@ -9,7 +9,7 @@
 const express = require("express");
 const router = express.Router({ mergeParams: true }); // accès à req.params.eventId
 const EventRoleController = require("../controllers/event_role.controller");
-const { authenticate, mustChangePwd, requireRole } = require("../middlewares/auth.middleware");
+const { authenticate, mustChangePwd, requireRole, requireAdminOrEventOwner } = require("../middlewares/auth.middleware");
 
 router.use(authenticate, mustChangePwd);
 
@@ -62,7 +62,7 @@ router.use(authenticate, mustChangePwd);
  *       403:
  *         description: Accès refusé — rôle admin requis
  */
-router.post("/",    requireRole("admin"),           EventRoleController.create);
+router.post("/",    requireAdminOrEventOwner,        EventRoleController.create);
 
 /**
  * @swagger
@@ -199,7 +199,7 @@ router.get("/:id",                                  EventRoleController.getOne);
  *       404:
  *         description: Rôle introuvable
  */
-router.put("/:id",  requireRole("admin"),           EventRoleController.update);
+router.put("/:id",  requireAdminOrEventOwner,        EventRoleController.update);
 
 /**
  * @swagger
@@ -241,6 +241,6 @@ router.put("/:id",  requireRole("admin"),           EventRoleController.update);
  *       404:
  *         description: Rôle introuvable
  */
-router.delete("/:id", requireRole("admin"),         EventRoleController.delete);
+router.delete("/:id", requireAdminOrEventOwner,      EventRoleController.delete);
 
 module.exports = router;

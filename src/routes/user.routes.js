@@ -100,7 +100,7 @@ router.post("/", requireRole("admin"), UserController.create);
  *       403:
  *         description: Accès refusé — rôle admin requis
  */
-router.get("/", requireRole("admin"), UserController.getAll);
+router.get("/", requireRole(["admin", "organisateur"]), UserController.getAll);
 
 /**
  * @swagger
@@ -139,7 +139,7 @@ router.get("/", requireRole("admin"), UserController.getAll);
  *       403:
  *         description: Accès refusé — rôle admin requis
  */
-router.get("/:id", requireRole("admin"), UserController.getOne);
+router.get("/:id", requireRole(["admin", "organisateur"]), UserController.getOne);
 
 /**
  * @swagger

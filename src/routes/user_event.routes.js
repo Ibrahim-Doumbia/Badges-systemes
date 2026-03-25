@@ -9,7 +9,7 @@
 const express = require("express");
 const router = express.Router({ mergeParams: true }); // accès à req.params.eventId
 const UserEventController = require("../controllers/user_event.controller");
-const { authenticate, mustChangePwd, requireRole } = require("../middlewares/auth.middleware");
+const { authenticate, mustChangePwd, requireRole, requireAdminOrEventOwner } = require("../middlewares/auth.middleware");
 
 router.use(authenticate, mustChangePwd);
 
@@ -64,7 +64,7 @@ router.use(authenticate, mustChangePwd);
  *       404:
  *         description: Événement, utilisateur ou rôle introuvable
  */
-router.post("/",              requireRole("admin"), UserEventController.assign);
+router.post("/",              requireAdminOrEventOwner, UserEventController.assign);
 
 /**
  * @swagger
@@ -159,7 +159,7 @@ router.get("/",                                     UserEventController.getTeam)
  *       404:
  *         description: Assignation introuvable
  */
-router.patch("/:id/role",     requireRole("admin"), UserEventController.changeRole);
+router.patch("/:id/role",     requireAdminOrEventOwner, UserEventController.changeRole);
 
 /**
  * @swagger
@@ -199,6 +199,6 @@ router.patch("/:id/role",     requireRole("admin"), UserEventController.changeRo
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete("/:id",         requireRole("admin"), UserEventController.remove);
+router.delete("/:id",         requireAdminOrEventOwner, UserEventController.remove);
 
 module.exports = router;

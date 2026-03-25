@@ -8,8 +8,9 @@
  * - Inclusion des jours, catégories et rôles associés
  */
 
-const { Event, EventType, EventDay, EventRole, Category, User } = require("../models");
+const { Event, EventType, EventDay, EventRole, Category, User, UserEvent } = require("../models");
 const EventRoleService = require("./event_role.service");
+const MailService = require("./mail.service");
 const { Op } = require("sequelize");
 
 class EventService {
@@ -29,8 +30,33 @@ class EventService {
     // Création automatique des rôles par défaut pour cet événement
     await EventRoleService.createDefaults(event.id);
 
-    // On retourne l'événement avec ses rôles inclus
-    return await EventService.getById(event.id);
+    // Assigner automatiquement le créateur comme Organisateur de l'événement
+    const organisateurRole = await EventRole.findOne({
+      where: { event_id: event.id, name: "Organisateur" },
+    });
+    if (organisateurRole) {
+      await UserEvent.create({
+        user_id: created_by,
+        event_id: event.id,
+        event_role_id: organisateurRole.id,
+      });
+    }
+
+    // Récupérer l'événement complet pour la réponse et l'email
+    const fullEvent = await EventService.getById(event.id);
+
+    // Envoyer l'email de confirmation à l'organisateur (sans bloquer la réponse en cas d'échec)
+    const organizer = await User.findByPk(created_by);
+    if (organizer) {
+      MailService.sendEventCreated({
+        to: organizer.email,
+        prenom: organizer.prenom,
+        nom: organizer.nom,
+        event: fullEvent,
+      }).catch((err) => console.error("[Mail] Échec envoi email création événement :", err.message));
+    }
+
+    return fullEvent;
   }
 
   static async getAll({ limit, offset, search, event_type_id, isActive }) {

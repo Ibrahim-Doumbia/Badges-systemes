@@ -7,7 +7,7 @@
 const express = require("express");
 const router = express.Router();
 const EventController = require("../controllers/event.controller");
-const { authenticate, mustChangePwd, requireRole } = require("../middlewares/auth.middleware");
+const { authenticate, mustChangePwd, requireRole, requireAdminOrEventOwner } = require("../middlewares/auth.middleware");
 
 router.use(authenticate, mustChangePwd);
 
@@ -52,9 +52,9 @@ router.use(authenticate, mustChangePwd);
  *       401:
  *         description: Non authentifié
  *       403:
- *         description: Accès refusé — rôle admin requis
+ *         description: Accès refusé — authentification requise
  */
-router.post("/", requireRole("admin"), EventController.create);
+router.post("/", EventController.create);
 
 /**
  * @swagger
@@ -188,7 +188,7 @@ router.get("/:id", EventController.getOne);
  *       404:
  *         description: Événement introuvable
  */
-router.put("/:id", requireRole("admin"), EventController.update);
+router.put("/:id", requireAdminOrEventOwner, EventController.update);
 
 /**
  * @swagger
@@ -222,6 +222,6 @@ router.put("/:id", requireRole("admin"), EventController.update);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete("/:id", requireRole("admin"), EventController.delete);
+router.delete("/:id", requireAdminOrEventOwner, EventController.delete);
 
 module.exports = router;

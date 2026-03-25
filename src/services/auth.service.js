@@ -86,6 +86,55 @@ class AuthService {
   }
 
   /**
+   * Inscrit un nouvel utilisateur avec le rôle "organisateur".
+   * Accessible publiquement — aucun admin requis.
+   */
+  static async register({ nom, prenom, email, password }) {
+    if (!nom || !prenom || !email || !password) {
+      throw new Error("Tous les champs sont requis (nom, prenom, email, password)");
+    }
+
+    if (!PASSWORD_REGEX.test(password)) {
+      throw new Error(
+        "Le mot de passe doit contenir au moins 8 caractères, une majuscule et un caractère spécial"
+      );
+    }
+
+    const existing = await User.findOne({ where: { email } });
+    if (existing) throw new Error("Un compte avec cet email existe déjà");
+
+    const organisateurRole = await Role.findOne({ where: { name: "organisateur" } });
+    if (!organisateurRole) throw new Error("Rôle organisateur introuvable — relancez le seeder");
+
+    const hashed = await bcrypt.hash(password, SALT_ROUNDS);
+    const user = await User.create({
+      nom, prenom, email,
+      password: hashed,
+      mustChangePassword: false,
+      isActive: true,
+      role_id: organisateurRole.id,
+    });
+
+    const userWithRole = await User.findByPk(user.id, {
+      include: [{ model: Role, as: "role" }],
+    });
+
+    const token = AuthService.generateToken(userWithRole);
+
+    return {
+      token,
+      user: {
+        id: userWithRole.id,
+        nom: userWithRole.nom,
+        prenom: userWithRole.prenom,
+        email: userWithRole.email,
+        role: userWithRole.role?.name,
+        mustChangePassword: false,
+      },
+    };
+  }
+
+  /**
    * Génère un JWT signé avec les informations de l'utilisateur.
    */
   static generateToken(user) {

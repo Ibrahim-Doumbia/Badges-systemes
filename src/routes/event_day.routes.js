@@ -6,7 +6,7 @@
 const express = require("express");
 const router = express.Router({ mergeParams: true }); // mergeParams permet d'accéder à req.params.eventId
 const EventDayController = require("../controllers/event_day.controller");
-const { authenticate, mustChangePwd, requireRole } = require("../middlewares/auth.middleware");
+const { authenticate, mustChangePwd, requireAdminOrEventOwner } = require("../middlewares/auth.middleware");
 
 router.use(authenticate, mustChangePwd);
 
@@ -62,7 +62,7 @@ router.use(authenticate, mustChangePwd);
  *       404:
  *         description: Événement introuvable
  */
-router.post("/", requireRole("admin"), EventDayController.create);
+router.post("/", requireAdminOrEventOwner, EventDayController.create);
 
 /**
  * @swagger
@@ -198,7 +198,7 @@ router.get("/:id", EventDayController.getOne);
  *       404:
  *         description: Jour introuvable
  */
-router.put("/:id", requireRole(["admin", "staff"]), EventDayController.update);
+router.put("/:id", requireAdminOrEventOwner, EventDayController.update);
 
 /**
  * @swagger
@@ -237,6 +237,6 @@ router.put("/:id", requireRole(["admin", "staff"]), EventDayController.update);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete("/:id", requireRole("admin"), EventDayController.delete);
+router.delete("/:id", requireAdminOrEventOwner, EventDayController.delete);
 
 module.exports = router;

@@ -27,7 +27,12 @@ async function seed() {
       defaults: { description: "Staff — gestion des participants et badges" },
     });
 
-    console.log("✔ Rôles créés/vérifiés :", adminRole.name, "/", staffRole.name);
+    const [organisateurRole] = await Role.findOrCreate({
+      where: { name: "organisateur" },
+      defaults: { description: "Organisateur — peut créer et gérer ses propres événements" },
+    });
+
+    console.log("✔ Rôles créés/vérifiés :", adminRole.name, "/", staffRole.name, "/", organisateurRole.name);
 
     // ── 2. Compte admin par défaut ─────────────────────────────────────────────
     const adminEmail = "admin@badges.com";

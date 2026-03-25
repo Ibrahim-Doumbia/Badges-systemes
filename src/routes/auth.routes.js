@@ -19,6 +19,40 @@ const { authenticate, mustChangePwd } = require("../middlewares/auth.middleware"
 
 /**
  * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Inscription publique
+ *     description: Crée un compte utilisateur avec le rôle organisateur et retourne un token JWT.
+ *     tags: [Authentification]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [nom, prenom, email, password]
+ *             properties:
+ *               nom:
+ *                 type: string
+ *               prenom:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 description: Min 8 caractères, 1 majuscule, 1 caractère spécial
+ *     responses:
+ *       201:
+ *         description: Inscription réussie — retourne le token et le profil
+ *       400:
+ *         description: Données invalides ou email déjà utilisé
+ */
+router.post("/register", AuthController.register);
+
+/**
+ * @swagger
  * /auth/login:
  *   post:
  *     summary: Connexion utilisateur
