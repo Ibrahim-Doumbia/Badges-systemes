@@ -21,8 +21,9 @@ class UserEventService {
    * @param {string} event_id      - UUID de l'événement
    * @param {string} user_id       - UUID de l'utilisateur à assigner
    * @param {string} event_role_id - UUID du rôle d'événement (doit appartenir à cet événement)
+   * @param {string} requesterRole - Rôle système du requérant ("admin", "staff", "organisateur")
    */
-  static async assign({ event_id, user_id, event_role_id }) {
+  static async assign({ event_id, user_id, event_role_id, requesterRole }) {
     // Vérifications d'existence
     const event = await Event.findByPk(event_id);
     if (!event) throw new Error("Événement introuvable");
@@ -39,9 +40,15 @@ class UserEventService {
       throw new Error("Ce rôle n'appartient pas à cet événement");
     }
 
-    // L'organisateur (créateur de l'événement) ne peut pas être assigné comme staff
-    if (event.created_by === user_id) {
-      throw new Error("L'organisateur de l'événement ne peut pas être assigné comme membre du staff");
+    // Seul un admin peut attribuer le rôle "Organisateur"
+    if (eventRole.name === "Organisateur" && requesterRole !== "admin") {
+      throw new Error("Seul un administrateur peut attribuer le rôle Organisateur");
+    }
+
+    // Le rôle "Organisateur" est unique par événement
+    if (eventRole.name === "Organisateur") {
+      const existingOrganisateur = await UserEvent.findOne({ where: { event_id, event_role_id } });
+      if (existingOrganisateur) throw new Error("Un organisateur est déjà assigné à cet événement");
     }
 
     // Un utilisateur ne peut être assigné qu'une seule fois par événement
@@ -115,8 +122,9 @@ class UserEventService {
    * Change le rôle d'un membre de l'équipe dans un événement.
    * @param {string} id            - UUID de l'UserEvent
    * @param {string} event_role_id - UUID du nouveau rôle
+   * @param {string} requesterRole - Rôle système du requérant ("admin", "staff", "organisateur")
    */
-  static async changeRole(id, event_role_id) {
+  static async changeRole(id, event_role_id, requesterRole) {
     const assignment = await UserEvent.findByPk(id);
     if (!assignment) throw new Error("Affectation introuvable");
 
@@ -126,6 +134,21 @@ class UserEventService {
     // Le nouveau rôle doit appartenir au même événement
     if (newRole.event_id !== assignment.event_id) {
       throw new Error("Ce rôle n'appartient pas à cet événement");
+    }
+
+    // Seul un admin peut attribuer ou changer vers le rôle "Organisateur"
+    if (newRole.name === "Organisateur" && requesterRole !== "admin") {
+      throw new Error("Seul un administrateur peut attribuer le rôle Organisateur");
+    }
+
+    // Le rôle "Organisateur" est unique par événement
+    if (newRole.name === "Organisateur") {
+      const existingOrganisateur = await UserEvent.findOne({
+        where: { event_id: assignment.event_id, event_role_id },
+      });
+      if (existingOrganisateur && existingOrganisateur.id !== id) {
+        throw new Error("Un organisateur est déjà assigné à cet événement");
+      }
     }
 
     await assignment.update({ event_role_id });

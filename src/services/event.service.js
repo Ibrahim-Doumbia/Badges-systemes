@@ -17,10 +17,19 @@ class EventService {
   /**
    * Crée un événement et génère automatiquement ses rôles d'équipe par défaut.
    * Les rôles créés : Coordinateur, Accueil, Sécurité, Animateur, Logistique, Communication.
+   * L'organisateur est choisi explicitement via organisateur_id (obligatoire).
+   * Seul l'admin peut créer un événement et désigner un organisateur.
    */
-  static async create({ title, description, start_date, end_date, lieu, event_type_id, created_by }) {
+  static async create({ title, description, start_date, end_date, lieu, event_type_id, created_by, organisateur_id }) {
+    if (!organisateur_id) throw new Error("L'identifiant de l'organisateur est obligatoire");
+
     const eventType = await EventType.findByPk(event_type_id);
     if (!eventType) throw new Error("Type d'événement introuvable");
+
+    // Valider que l'organisateur désigné existe et est actif
+    const organisateur = await User.findByPk(organisateur_id);
+    if (!organisateur) throw new Error("Organisateur introuvable");
+    if (!organisateur.isActive) throw new Error("L'organisateur sélectionné est désactivé");
 
     // Création de l'événement
     const event = await Event.create({
@@ -30,13 +39,13 @@ class EventService {
     // Création automatique des rôles par défaut pour cet événement
     await EventRoleService.createDefaults(event.id);
 
-    // Assigner automatiquement le créateur comme Organisateur de l'événement
+    // Assigner l'organisateur désigné (pas forcément le créateur) au rôle "Organisateur"
     const organisateurRole = await EventRole.findOne({
       where: { event_id: event.id, name: "Organisateur" },
     });
     if (organisateurRole) {
       await UserEvent.create({
-        user_id: created_by,
+        user_id: organisateur_id,
         event_id: event.id,
         event_role_id: organisateurRole.id,
       });
@@ -45,16 +54,13 @@ class EventService {
     // Récupérer l'événement complet pour la réponse et l'email
     const fullEvent = await EventService.getById(event.id);
 
-    // Envoyer l'email de confirmation à l'organisateur (sans bloquer la réponse en cas d'échec)
-    const organizer = await User.findByPk(created_by);
-    if (organizer) {
-      MailService.sendEventCreated({
-        to: organizer.email,
-        prenom: organizer.prenom,
-        nom: organizer.nom,
-        event: fullEvent,
-      }).catch((err) => console.error("[Mail] Échec envoi email création événement :", err.message));
-    }
+    // Envoyer l'email de confirmation à l'organisateur désigné
+    MailService.sendEventCreated({
+      to: organisateur.email,
+      prenom: organisateur.prenom,
+      nom: organisateur.nom,
+      event: fullEvent,
+    }).catch((err) => console.error("[Mail] Échec envoi email création événement :", err.message));
 
     return fullEvent;
   }

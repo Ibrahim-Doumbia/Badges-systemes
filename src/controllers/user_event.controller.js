@@ -19,6 +19,7 @@ class UserEventController {
         event_id: req.params.eventId,
         user_id: req.body.user_id,
         event_role_id: req.body.event_role_id,
+        requesterRole: req.user.role.name,
       });
       return success(res, assignment, "Utilisateur assigné à l'événement", 201);
     } catch (err) {
@@ -47,7 +48,11 @@ class UserEventController {
    */
   static async changeRole(req, res) {
     try {
-      const assignment = await UserEventService.changeRole(req.params.id, req.body.event_role_id);
+      const assignment = await UserEventService.changeRole(
+        req.params.id,
+        req.body.event_role_id,
+        req.user.role.name
+      );
       return success(res, assignment, "Rôle mis à jour");
     } catch (err) {
       return error(res, err.message);
