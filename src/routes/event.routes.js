@@ -8,6 +8,7 @@ const express = require("express");
 const router = express.Router();
 const EventController = require("../controllers/event.controller");
 const { authenticate, mustChangePwd, requireRole, requireAdminOrEventOwner } = require("../middlewares/auth.middleware");
+const { uploadEventPhoto } = require("../middlewares/upload.middleware");
 
 router.use(authenticate, mustChangePwd);
 
@@ -23,12 +24,16 @@ router.use(authenticate, mustChangePwd);
  * /events:
  *   post:
  *     summary: Créer un événement
- *     description: Crée un nouvel événement. Le créateur est automatiquement extrait du token JWT.
+ *     description: |
+ *       Crée un nouvel événement avec une photo optionnelle.
+ *       - Le créateur est automatiquement extrait du token JWT.
+ *       - **Admin** : peut désigner n'importe quel utilisateur actif comme organisateur via `organisateur_id`.
+ *       - **Non-admin** : l'organisateur est automatiquement fixé à l'utilisateur connecté, même si `organisateur_id` est fourni.
  *     tags: [Événements]
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             $ref: '#/components/schemas/CreateEventRequest'
  *     responses:
@@ -44,7 +49,7 @@ router.use(authenticate, mustChangePwd);
  *                     data:
  *                       $ref: '#/components/schemas/Event'
  *       400:
- *         description: Données invalides (ex. end_date avant start_date)
+ *         description: Données invalides (ex. end_date avant start_date, format image non supporté)
  *         content:
  *           application/json:
  *             schema:
@@ -52,15 +57,24 @@ router.use(authenticate, mustChangePwd);
  *       401:
  *         description: Non authentifié
  *       403:
- *         description: Accès refusé — authentification requise
+ *         description: Accès refusé
  */
-router.post("/", EventController.create);
+router.post("/", (req, res, next) => {
+  uploadEventPhoto(req, res, (err) => {
+    if (err) return res.status(400).json({ success: false, message: err.message });
+    next();
+  });
+}, EventController.create);
 
 /**
  * @swagger
  * /events:
  *   get:
  *     summary: Lister les événements
+ *     description: |
+ *       Retourne la liste paginée des événements.
+ *       - **Admin** : voit tous les événements de la plateforme.
+ *       - **Non-admin** : voit uniquement les événements qu'il a lui-même créés.
  *     tags: [Événements]
  *     parameters:
  *       - in: query

@@ -107,6 +107,12 @@ const options = {
             start_date: { type: "string", format: "date", example: "2025-06-01" },
             end_date: { type: "string", format: "date", example: "2025-06-03" },
             lieu: { type: "string", example: "Palais des congrès, Yaoundé" },
+            photo_url: {
+              type: "string",
+              nullable: true,
+              example: "/uploads/events/1717200000000-123456789.jpg",
+              description: "URL de la photo de l'événement",
+            },
             isActive: { type: "boolean", example: true },
             event_type_id: { type: "string", format: "uuid" },
             created_by: { type: "string", format: "uuid" },
@@ -123,6 +129,16 @@ const options = {
             end_date: { type: "string", format: "date", example: "2025-06-03" },
             lieu: { type: "string", example: "Palais des congrès, Yaoundé" },
             event_type_id: { type: "string", format: "uuid" },
+            organisateur_id: {
+              type: "string",
+              format: "uuid",
+              description: "Admin uniquement — ID de l'organisateur désigné. Ignoré pour les non-admins (forcé à l'utilisateur connecté).",
+            },
+            photo: {
+              type: "string",
+              format: "binary",
+              description: "Photo de l'événement (jpeg, png, webp, gif — 5 Mo max)",
+            },
           },
         },
         // ─── EventDay ─────────────────────────────────────────────────────────

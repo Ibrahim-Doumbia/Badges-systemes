@@ -5,10 +5,23 @@ const { getPagination } = require("../utils/pagination.util");
 class EventController {
   static async create(req, res) {
     try {
-      // L'ID du créateur provient du token JWT (req.user)
+      const isAdmin = req.user.role?.name === "admin";
+
+      // Un non-admin ne peut créer un événement que pour lui-même
+      let { organisateur_id } = req.body;
+      if (!isAdmin) {
+        organisateur_id = req.user.id;
+      }
+
+      const photo_url = req.file
+        ? `/uploads/events/${req.file.filename}`
+        : null;
+
       const event = await EventService.create({
         ...req.body,
+        organisateur_id,
         created_by: req.user.id,
+        photo_url,
       });
       return success(res, event, "Événement créé", 201);
     } catch (err) {
@@ -20,8 +33,11 @@ class EventController {
     try {
       const { page, limit, offset } = getPagination(req.query);
       const { search, event_type_id, isActive } = req.query;
+      const isAdmin = req.user.role?.name === "admin";
       const { count, rows } = await EventService.getAll({
         limit, offset, search, event_type_id, isActive,
+        userId: req.user.id,
+        isAdmin,
       });
       return paginated(res, rows, count, { page, limit }, "Liste des événements");
     } catch (err) {

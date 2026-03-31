@@ -20,7 +20,7 @@ class EventService {
    * L'organisateur est choisi explicitement via organisateur_id (obligatoire).
    * Seul l'admin peut créer un événement et désigner un organisateur.
    */
-  static async create({ title, description, start_date, end_date, lieu, event_type_id, created_by, organisateur_id }) {
+  static async create({ title, description, start_date, end_date, lieu, event_type_id, created_by, organisateur_id, photo_url }) {
     if (!organisateur_id) throw new Error("L'identifiant de l'organisateur est obligatoire");
 
     const eventType = await EventType.findByPk(event_type_id);
@@ -33,7 +33,7 @@ class EventService {
 
     // Création de l'événement
     const event = await Event.create({
-      title, description, start_date, end_date, lieu, event_type_id, created_by,
+      title, description, start_date, end_date, lieu, event_type_id, created_by, photo_url,
     });
 
     // Création automatique des rôles par défaut pour cet événement
@@ -65,8 +65,11 @@ class EventService {
     return fullEvent;
   }
 
-  static async getAll({ limit, offset, search, event_type_id, isActive }) {
+  static async getAll({ limit, offset, search, event_type_id, isActive, userId, isAdmin }) {
     const where = {};
+
+    // Un non-admin ne voit que les événements qu'il a créés
+    if (!isAdmin) where.created_by = userId;
 
     if (search) {
       where[Op.or] = [
@@ -84,7 +87,7 @@ class EventService {
         { model: User, as: "creator", attributes: ["id", "nom", "prenom"] },
         { model: EventDay, as: "days" },
         { model: Category, as: "categories" },
-        { model: EventRole, as: "roles", attributes: ["id", "name"] },
+        // { model: EventRole, as: "roles", attributes: ["id", "name"] },
       ],
       limit,
       offset,
