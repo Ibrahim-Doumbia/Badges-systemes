@@ -113,13 +113,12 @@ class MailService {
    * @param {object} params.event       - Objet événement
    * @param {object} params.category    - Objet catégorie
    * @param {object} params.badge       - Objet badge (avec qr_code)
-   * @param {object} params.form_data   - Données du formulaire soumis
    */
-  static async sendInscriptionConfirmed({ to, participant, event, category, badge, form_data = {} }) {
+  static async sendInscriptionConfirmed({ to, participant, event, category, badge }) {
     const displayName =
-      form_data.prenom && form_data.nom
-        ? `${form_data.prenom} ${form_data.nom}`
-        : form_data.nom || form_data.prenom || to;
+      participant.prenom && participant.nom
+        ? `${participant.prenom} ${participant.nom}`
+        : participant.nom || participant.prenom || to;
 
     const startDate = new Date(event.start_date).toLocaleDateString("fr-FR", {
       weekday: "long", day: "numeric", month: "long", year: "numeric",
@@ -129,12 +128,20 @@ class MailService {
     });
 
     // Générer le PDF du badge
-    const pdfBuffer = await generateBadgePDF({ participant, event, category, badge, form_data });
+    const pdfBuffer = await generateBadgePDF({ participant, event, category, badge });
 
-    // Construire le tableau des infos du formulaire pour l'email
-    const formRows = Object.entries(form_data)
-      .filter(([key]) => key !== "email")
-      .map(([key, val]) => `<tr><td style="padding:6px 12px;font-weight:bold;color:#1e293b;">${key}</td><td style="padding:6px 12px;color:#475569;">${val}</td></tr>`)
+    // Construire le tableau des infos du participant pour l'email
+    const participantFields = [
+      { label: "Nom", value: participant.nom },
+      { label: "Prénom", value: participant.prenom },
+      { label: "Téléphone", value: participant.telephone },
+      { label: "Fonction", value: participant.fonction },
+      { label: "Organisation", value: participant.organisation },
+      { label: "Localité", value: participant.localite },
+    ];
+    const formRows = participantFields
+      .filter(({ value }) => value)
+      .map(({ label, value }) => `<tr><td style="padding:6px 12px;font-weight:bold;color:#1e293b;">${label}</td><td style="padding:6px 12px;color:#475569;">${value}</td></tr>`)
       .join("");
 
     const html = `

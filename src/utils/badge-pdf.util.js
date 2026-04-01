@@ -7,13 +7,12 @@
  * @param {object} params.event        - Objet événement (title, start_date, end_date, lieu)
  * @param {object} params.category     - Objet catégorie (name)
  * @param {object} params.badge        - Objet badge (qr_code en data URL base64)
- * @param {object} params.form_data    - Données du formulaire soumis par le participant
  * @returns {Promise<Buffer>}
  */
 
 const PDFDocument = require("pdfkit");
 
-function generateBadgePDF({ participant, event, category, badge, form_data = {} }) {
+function generateBadgePDF({ participant, event, category, badge }) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: [300, 420], margin: 20 });
     const chunks = [];
@@ -23,9 +22,9 @@ function generateBadgePDF({ participant, event, category, badge, form_data = {} 
     doc.on("error", reject);
 
     const displayName =
-      form_data.prenom && form_data.nom
-        ? `${form_data.prenom} ${form_data.nom}`
-        : form_data.nom || form_data.prenom || form_data.email || participant.email;
+      participant.prenom && participant.nom
+        ? `${participant.prenom} ${participant.nom}`
+        : participant.nom || participant.prenom || participant.email;
 
     const startDate = new Date(event.start_date).toLocaleDateString("fr-FR", {
       day: "numeric", month: "long", year: "numeric",
@@ -63,7 +62,7 @@ function generateBadgePDF({ participant, event, category, badge, form_data = {} 
       y += 18;
     }
 
-    doc.text(`✉️  ${participant.email || form_data.email}`, 20, y, { width: 260 });
+    doc.text(`✉️  ${participant.email}`, 20, y, { width: 260 });
     y += 18;
 
     // ── QR Code ─────────────────────────────────────────────────────────────

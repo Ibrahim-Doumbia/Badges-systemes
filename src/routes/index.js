@@ -7,6 +7,7 @@
  *   /categories  → catégories de participation
  *   /roles       → rôles d'équipe de l'événement (créés auto à la création)
  *   /team        → membres assignés à l'équipe avec leur rôle
+
  */
 
 const express = require("express");
@@ -18,7 +19,6 @@ const eventTypeRoutes   = require("./event_type.routes");
 const eventRoutes       = require("./event.routes");
 const eventDayRoutes    = require("./event_day.routes");
 const eventRoleRoutes   = require("./event_role.routes");
-const eventFieldRoutes  = require("./event_field.routes");
 const categoryRoutes    = require("./category.routes");
 const participantRoutes = require("./participant.routes");
 const inscriptionRoutes = require("./inscription.routes");
@@ -42,7 +42,6 @@ router.use("/badges",       badgeRoutes);
 router.use("/events/:eventId/days",       eventDayRoutes);
 router.use("/events/:eventId/categories", categoryRoutes);
 router.use("/events/:eventId/roles",      eventRoleRoutes);
-router.use("/events/:eventId/fields",     eventFieldRoutes);
 router.use("/events/:eventId/team",       userEventRoutes);
 
 module.exports = router;

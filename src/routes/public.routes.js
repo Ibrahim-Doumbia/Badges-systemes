@@ -16,6 +16,30 @@ const PublicController = require("../controllers/public.controller");
 
 /**
  * @swagger
+ * /public/events:
+ *   get:
+ *     summary: Lister les événements en cours et à venir
+ *     description: Retourne tous les événements actifs dont la date de fin est supérieure ou égale à aujourd'hui. Accessible sans authentification.
+ *     tags: [Public]
+ *     responses:
+ *       200:
+ *         description: Liste des événements
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Event'
+ */
+router.get("/events", PublicController.getEvents);
+
+/**
+ * @swagger
  * /public/register/{token}:
  *   get:
  *     summary: Récupérer le formulaire d'inscription d'un événement
@@ -45,9 +69,8 @@ router.get("/register/:token", PublicController.getRegistrationForm);
  *   post:
  *     summary: S'inscrire à un événement (auto-inscription participant)
  *     description: |
- *       Le participant remplit le formulaire et s'inscrit directement.
- *       Le champ `email` est toujours obligatoire pour identifier le participant.
- *       Les autres champs dépendent de la configuration de l'organisateur.
+ *       Le participant remplit ses informations personnelles et s'inscrit directement.
+ *       Le champ `email` est obligatoire. Si le participant existe déjà (même email), ses données sont réutilisées.
  *     tags: [Public]
  *     parameters:
  *       - in: path
@@ -61,22 +84,7 @@ router.get("/register/:token", PublicController.getRegistrationForm);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - form_data
- *               - category_id
- *             properties:
- *               category_id:
- *                 type: string
- *                 format: uuid
- *               form_data:
- *                 type: object
- *                 description: Réponses aux champs définis par l'organisateur
- *                 example:
- *                   email: "jean@example.com"
- *                   nom: "Dupont"
- *                   prenom: "Jean"
- *                   societe: "TechCorp"
+ *             $ref: '#/components/schemas/PublicRegisterRequest'
  *     responses:
  *       201:
  *         description: Inscription enregistrée

@@ -10,10 +10,10 @@ const options = {
 
 ## Flux d'inscription participant
 1. L'organisateur crée un événement → un \`registration_token\` est généré automatiquement
-2. L'organisateur définit les champs du formulaire via \`POST /events/{id}/fields\`
-3. Le lien public est partagé : \`GET /public/register/{token}\` → retourne le formulaire
-4. Le participant remplit et soumet : \`POST /public/register/{token}\` → inscription **confirmée automatiquement** + badge PDF envoyé par email
-5. Jour J : \`GET /public/events/{id}/qr\` → QR code à scanner pour accéder au formulaire`,
+2. Les événements à venir sont visibles publiquement : \`GET /public/events\`
+3. Le lien d'inscription est partagé : \`GET /public/register/{token}\` → retourne les infos de l'événement et ses catégories
+4. Le participant remplit ses informations (nom, prénom, email…) et soumet : \`POST /public/register/{token}\` → inscription **confirmée automatiquement** + badge PDF envoyé par email
+5. Jour J : \`GET /public/events/{id}/qr\` → QR code à scanner pour accéder directement au formulaire d'inscription`,
     },
     servers: [
       {
@@ -129,11 +129,6 @@ const options = {
             event_type_id: { type: "string", format: "uuid" },
             created_by: { type: "string", format: "uuid" },
             createdAt: { type: "string", format: "date-time" },
-            fields: {
-              type: "array",
-              description: "Champs du formulaire d'inscription définis par l'organisateur",
-              items: { $ref: "#/components/schemas/EventField" },
-            },
           },
         },
         CreateEventRequest: {
@@ -156,51 +151,6 @@ const options = {
               format: "binary",
               description: "Photo de l'événement (jpeg, png, webp, gif — 5 Mo max)",
             },
-          },
-        },
-        // ─── EventField ───────────────────────────────────────────────────────
-        EventField: {
-          type: "object",
-          properties: {
-            id: { type: "string", format: "uuid" },
-            label: { type: "string", example: "Nom de l'entreprise" },
-            field_key: { type: "string", example: "societe" },
-            field_type: {
-              type: "string",
-              enum: ["text", "email", "tel", "number", "date", "select", "textarea"],
-              example: "text",
-            },
-            is_required: { type: "boolean", example: true },
-            options: {
-              type: "array",
-              nullable: true,
-              items: { type: "string" },
-              example: ["VIP", "Standard", "Presse"],
-              description: "Choix possibles pour les champs de type 'select'",
-            },
-            order: { type: "integer", example: 1 },
-            event_id: { type: "string", format: "uuid" },
-          },
-        },
-        CreateEventFieldRequest: {
-          type: "object",
-          required: ["label", "field_key", "field_type"],
-          properties: {
-            label: { type: "string", example: "Nom de l'entreprise" },
-            field_key: { type: "string", example: "societe", description: "Clé unique pour cet événement" },
-            field_type: {
-              type: "string",
-              enum: ["text", "email", "tel", "number", "date", "select", "textarea"],
-              example: "text",
-            },
-            is_required: { type: "boolean", example: true },
-            options: {
-              type: "array",
-              nullable: true,
-              items: { type: "string" },
-              example: ["Option A", "Option B"],
-            },
-            order: { type: "integer", example: 1 },
           },
         },
         // ─── EventDay ─────────────────────────────────────────────────────────
@@ -319,6 +269,22 @@ const options = {
             localite: { type: "string" },
           },
         },
+        // ─── Public Register ──────────────────────────────────────────────────
+        PublicRegisterRequest: {
+          type: "object",
+          required: ["email", "category_id"],
+          description: "Corps de la requête d'inscription publique. L'email identifie le participant. Si le participant existe déjà (même email), ses données sont réutilisées.",
+          properties: {
+            email: { type: "string", format: "email", example: "alice.kamga@example.com" },
+            nom: { type: "string", example: "Kamga" },
+            prenom: { type: "string", example: "Alice" },
+            telephone: { type: "string", example: "+237 6XX XXX XXX" },
+            fonction: { type: "string", example: "Ingénieure logicielle" },
+            organisation: { type: "string", example: "TechCorp SA" },
+            localite: { type: "string", example: "Douala" },
+            category_id: { type: "string", format: "uuid", description: "ID de la catégorie choisie (doit appartenir à l'événement)" },
+          },
+        },
         // ─── Inscription ──────────────────────────────────────────────────────
         Inscription: {
           type: "object",
@@ -332,12 +298,6 @@ const options = {
               enum: ["pending", "confirmed", "cancelled"],
               example: "confirmed",
               description: "Auto-confirmé lors de l'inscription publique. Gérable manuellement par admin/staff/organisateur.",
-            },
-            form_data: {
-              type: "object",
-              nullable: true,
-              description: "Réponses du participant aux champs dynamiques du formulaire",
-              example: { email: "alice@example.com", nom: "Kamga", societe: "TechCorp" },
             },
             date_inscription: { type: "string", format: "date-time" },
           },

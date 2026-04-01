@@ -29,11 +29,6 @@ const Inscription = sequelize.define(
       defaultValue: "pending",
       allowNull: false,
     },
-    form_data: {
-      type: DataTypes.JSONB,
-      allowNull: true,
-      comment: "Réponses du participant aux champs dynamiques du formulaire d'inscription",
-    },
     // participant_id, event_id, category_id ajoutés via associations dans index.js
   },
   {

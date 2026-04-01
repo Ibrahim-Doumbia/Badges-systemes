@@ -8,7 +8,7 @@
  * - Inclusion des jours, catégories et rôles associés
  */
 
-const { Event, EventType, EventDay, EventRole, EventField, Category, User, UserEvent } = require("../models");
+const { Event, EventType, EventDay, EventRole, Category, User, UserEvent } = require("../models");
 const EventRoleService = require("./event_role.service");
 const MailService = require("./mail.service");
 const { Op } = require("sequelize");
@@ -105,7 +105,6 @@ class EventService {
         { model: User, as: "creator", attributes: ["id", "nom", "prenom"] },
         { model: EventDay, as: "days" },
         { model: Category, as: "categories" },
-        { model: EventField, as: "fields", order: [["order", "ASC"]] },
         // { model: EventRole, as: "roles", attributes: ["id", "name", "description"] },
       ],
     });

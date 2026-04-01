@@ -22,6 +22,7 @@
  *  EventRole ──< UserEvent      ← un membre d'équipe a un rôle de l'événement
  *  Event ──< Category
  *  Participant ──< Inscription
+
  *  Event ──< Inscription
  *  Category ──< Inscription
  *  Inscription ──1 Badge
@@ -38,7 +39,6 @@ const EventType   = require("./event_type.model");
 const Event       = require("./event.model");
 const EventDay    = require("./event_day.model");
 const EventRole   = require("./event_role.model");
-const EventField  = require("./event_field.model");
 const Category    = require("./category.model");
 const Participant = require("./participant.model");
 const Inscription = require("./inscription.model");
@@ -97,18 +97,6 @@ Event.hasMany(EventRole, {
   onDelete: "CASCADE",
 });
 EventRole.belongsTo(Event, {
-  foreignKey: { name: "event_id", type: DataTypes.UUID },
-  as: "event",
-});
-
-// ─── Relations Event / EventField ────────────────────────────────────────────
-// Champs dynamiques du formulaire d'inscription, supprimés en CASCADE
-Event.hasMany(EventField, {
-  foreignKey: { name: "event_id", type: DataTypes.UUID, allowNull: false },
-  as: "fields",
-  onDelete: "CASCADE",
-});
-EventField.belongsTo(Event, {
   foreignKey: { name: "event_id", type: DataTypes.UUID },
   as: "event",
 });
@@ -208,7 +196,6 @@ module.exports = {
   Event,
   EventDay,
   EventRole,
-  EventField,
   Category,
   Participant,
   Inscription,
