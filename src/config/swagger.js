@@ -6,7 +6,14 @@ const options = {
     info: {
       title: "Badges Système API",
       version: "1.0.0",
-      description: "API REST pour la gestion d'événements et génération de badges QR Code",
+      description: `API REST pour la gestion d'événements et génération de badges QR Code.
+
+## Flux d'inscription participant
+1. L'organisateur crée un événement → un \`registration_token\` est généré automatiquement
+2. L'organisateur définit les champs du formulaire via \`POST /events/{id}/fields\`
+3. Le lien public est partagé : \`GET /public/register/{token}\` → retourne le formulaire
+4. Le participant remplit et soumet : \`POST /public/register/{token}\` → inscription **confirmée automatiquement** + badge PDF envoyé par email
+5. Jour J : \`GET /public/events/{id}/qr\` → QR code à scanner pour accéder au formulaire`,
     },
     servers: [
       {
@@ -113,10 +120,20 @@ const options = {
               example: "/uploads/events/1717200000000-123456789.jpg",
               description: "URL de la photo de l'événement",
             },
+            registration_token: {
+              type: "string",
+              format: "uuid",
+              description: "Token unique — construit le lien public : /public/register/{token}",
+            },
             isActive: { type: "boolean", example: true },
             event_type_id: { type: "string", format: "uuid" },
             created_by: { type: "string", format: "uuid" },
             createdAt: { type: "string", format: "date-time" },
+            fields: {
+              type: "array",
+              description: "Champs du formulaire d'inscription définis par l'organisateur",
+              items: { $ref: "#/components/schemas/EventField" },
+            },
           },
         },
         CreateEventRequest: {
@@ -139,6 +156,51 @@ const options = {
               format: "binary",
               description: "Photo de l'événement (jpeg, png, webp, gif — 5 Mo max)",
             },
+          },
+        },
+        // ─── EventField ───────────────────────────────────────────────────────
+        EventField: {
+          type: "object",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            label: { type: "string", example: "Nom de l'entreprise" },
+            field_key: { type: "string", example: "societe" },
+            field_type: {
+              type: "string",
+              enum: ["text", "email", "tel", "number", "date", "select", "textarea"],
+              example: "text",
+            },
+            is_required: { type: "boolean", example: true },
+            options: {
+              type: "array",
+              nullable: true,
+              items: { type: "string" },
+              example: ["VIP", "Standard", "Presse"],
+              description: "Choix possibles pour les champs de type 'select'",
+            },
+            order: { type: "integer", example: 1 },
+            event_id: { type: "string", format: "uuid" },
+          },
+        },
+        CreateEventFieldRequest: {
+          type: "object",
+          required: ["label", "field_key", "field_type"],
+          properties: {
+            label: { type: "string", example: "Nom de l'entreprise" },
+            field_key: { type: "string", example: "societe", description: "Clé unique pour cet événement" },
+            field_type: {
+              type: "string",
+              enum: ["text", "email", "tel", "number", "date", "select", "textarea"],
+              example: "text",
+            },
+            is_required: { type: "boolean", example: true },
+            options: {
+              type: "array",
+              nullable: true,
+              items: { type: "string" },
+              example: ["Option A", "Option B"],
+            },
+            order: { type: "integer", example: 1 },
           },
         },
         // ─── EventDay ─────────────────────────────────────────────────────────
@@ -233,19 +295,20 @@ const options = {
           type: "object",
           properties: {
             id: { type: "string", format: "uuid" },
-            nom: { type: "string", example: "Kamga" },
-            prenom: { type: "string", example: "Alice" },
+            nom: { type: "string", nullable: true, example: "Kamga" },
+            prenom: { type: "string", nullable: true, example: "Alice" },
             email: { type: "string", format: "email", example: "alice.kamga@example.com" },
-            telephone: { type: "string", example: "+237 6XX XXX XXX" },
-            fonction: { type: "string", example: "Ingénieure logicielle" },
-            organisation: { type: "string", example: "TechCorp SA" },
-            localite: { type: "string", example: "Douala" },
+            telephone: { type: "string", nullable: true, example: "+237 6XX XXX XXX" },
+            fonction: { type: "string", nullable: true, example: "Ingénieure logicielle" },
+            organisation: { type: "string", nullable: true, example: "TechCorp SA" },
+            localite: { type: "string", nullable: true, example: "Douala" },
             createdAt: { type: "string", format: "date-time" },
           },
         },
         CreateParticipantRequest: {
           type: "object",
-          required: ["nom", "prenom", "email"],
+          required: ["email"],
+          description: "Seul l'email est obligatoire. Les autres champs dépendent des besoins.",
           properties: {
             nom: { type: "string" },
             prenom: { type: "string" },
@@ -264,13 +327,25 @@ const options = {
             participant_id: { type: "string", format: "uuid" },
             event_id: { type: "string", format: "uuid" },
             category_id: { type: "string", format: "uuid" },
-            statut: { type: "string", enum: ["pending", "confirmed", "cancelled"], example: "pending" },
+            statut: {
+              type: "string",
+              enum: ["pending", "confirmed", "cancelled"],
+              example: "confirmed",
+              description: "Auto-confirmé lors de l'inscription publique. Gérable manuellement par admin/staff/organisateur.",
+            },
+            form_data: {
+              type: "object",
+              nullable: true,
+              description: "Réponses du participant aux champs dynamiques du formulaire",
+              example: { email: "alice@example.com", nom: "Kamga", societe: "TechCorp" },
+            },
             date_inscription: { type: "string", format: "date-time" },
           },
         },
         CreateInscriptionRequest: {
           type: "object",
           required: ["participant_id", "event_id", "category_id"],
+          description: "Création manuelle par admin/staff/organisateur.",
           properties: {
             participant_id: { type: "string", format: "uuid" },
             event_id: { type: "string", format: "uuid" },

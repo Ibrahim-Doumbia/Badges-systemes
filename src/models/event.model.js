@@ -35,7 +35,9 @@ const Event = sequelize.define(
       validate: {
         isDate: { msg: "end_date doit être une date valide" },
         isAfterStart(value) {
-          if (value < this.start_date) {
+          const end = String(value).substring(0, 10);
+          const start = String(this.start_date).substring(0, 10);
+          if (end < start) {
             throw new Error("end_date doit être après start_date");
           }
         },
@@ -49,6 +51,12 @@ const Event = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    registration_token: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      allowNull: false,
+      comment: "Token unique pour le lien d'inscription public",
+    },
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
@@ -58,6 +66,7 @@ const Event = sequelize.define(
   {
     tableName: "events",
     timestamps: true,
+    indexes: [{ unique: true, fields: ["registration_token"] }],
   }
 );
 

@@ -16,11 +16,11 @@ const Participant = sequelize.define(
     },
     nom: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     prenom: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     email: {
       type: DataTypes.STRING,

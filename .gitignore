@@ -73,3 +73,8 @@ jest-html-reporters-*.html
 # SEQUELIZE
 # =========================
 sequelize-meta.json
+
+# =========================
+# UPLOADS (fichiers générés)
+# =========================
+uploads/
