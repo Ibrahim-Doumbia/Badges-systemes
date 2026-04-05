@@ -53,6 +53,19 @@ class BadgeController {
       return error(res, err.message);
     }
   }
+
+  /**
+   * PATCH /api/badges/inscription/:inscriptionId/regenerate
+   * Régénère (ou crée) le badge d'une inscription via son inscriptionId.
+   */
+  static async regenerateBadge(req, res) {
+    try {
+      const badge = await BadgeService.regenerateBadge(req.params.inscriptionId);
+      return success(res, badge, "Badge régénéré pour l'inscription");
+    } catch (err) {
+      return error(res, err.message, err.message.includes("introuvable") ? 404 : 400);
+    }
+  }
 }
 
 module.exports = BadgeController;

@@ -106,6 +106,34 @@ class BadgeService {
 
     return await badge.update({ qr_code, statut: "generated", date_generation: new Date() });
   }
+
+  /**
+   * Régénère le badge d'une inscription : recrée le QR Code si le badge existe,
+   * ou crée un nouveau badge si aucun badge n'est associé à cette inscription.
+   * @param {string} inscription_id - UUID de l'inscription
+   */
+  static async regenerateBadge(inscription_id) {
+    const inscription = await Inscription.findByPk(inscription_id); // await ajouté
+    if (!inscription) throw new Error("Inscription introuvable");
+
+    const qrData  = `BADGE:${inscription_id}`; // pas d'espace après ":"
+    const qr_code = await generateQRCode(qrData);
+
+    const existing = await Badge.findOne({ where: { inscription_id } }); // findOne par inscription_id
+
+    if (existing) {
+      // Badge existant → on régénère juste le QR Code
+      return existing.update({ qr_code, statut: "generated", date_generation: new Date() });
+    }
+
+    // Aucun badge → on en crée un
+    return Badge.create({
+      inscription_id,
+      qr_code,
+      statut: "generated", // "statut" et non "status"
+      date_generation: new Date(),
+    });
+  }
 }
 
 module.exports = BadgeService;

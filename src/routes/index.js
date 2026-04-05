@@ -25,6 +25,7 @@ const inscriptionRoutes = require("./inscription.routes");
 const badgeRoutes       = require("./badge.routes");
 const userEventRoutes   = require("./user_event.routes");
 const publicRoutes      = require("./public.routes");
+const exportRoutes      = require("./export.routes");
 
 // ─── Routes publiques (sans authentification) ────────────────────────────────
 router.use("/public",       publicRoutes);
@@ -43,5 +44,8 @@ router.use("/events/:eventId/days",       eventDayRoutes);
 router.use("/events/:eventId/categories", categoryRoutes);
 router.use("/events/:eventId/roles",      eventRoleRoutes);
 router.use("/events/:eventId/team",       userEventRoutes);
+
+// ─── Export / Import / Téléchargement ────────────────────────────────────────
+router.use("/", exportRoutes);
 
 module.exports = router;

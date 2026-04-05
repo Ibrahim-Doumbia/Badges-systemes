@@ -54,7 +54,7 @@ router.use(authenticate, mustChangePwd);
  *       404:
  *         description: Inscription introuvable
  */
-router.post("/generate/:inscriptionId", requireRole(["admin", "staff"]), BadgeController.generate);
+router.post("/generate/:inscriptionId", requireRole(["organisateur", "staff"]), BadgeController.generate);
 
 /**
  * @swagger
@@ -171,7 +171,7 @@ router.get("/:id", BadgeController.getOne);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.patch("/:id/print", requireRole(["admin", "staff"]), BadgeController.markAsPrinted);
+router.patch("/:id/print", requireRole(["organisateur", "staff"]), BadgeController.markAsPrinted);
 
 /**
  * @swagger
@@ -210,6 +210,48 @@ router.patch("/:id/print", requireRole(["admin", "staff"]), BadgeController.mark
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.patch("/:id/regenerate", requireRole("admin"), BadgeController.regenerate);
+router.patch("/:id/regenerate", requireRole("organisateur", "staff"), BadgeController.regenerate);
+
+/**
+ * @swagger
+ * /badges/inscription/{inscriptionId}/regenerate:
+ *   patch:
+ *     summary: Régénérer (ou créer) le badge d'une inscription
+ *     description: >
+ *       Si un badge existe pour cette inscription, son QR Code est régénéré.
+ *       Si aucun badge n'existe, un nouveau badge est créé.
+ *     tags: [Badges]
+ *     parameters:
+ *       - in: path
+ *         name: inscriptionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: UUID de l'inscription
+ *     responses:
+ *       200:
+ *         description: Badge régénéré ou créé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Badge'
+ *       401:
+ *         description: Non authentifié
+ *       403:
+ *         description: Accès refusé — rôle admin requis
+ *       404:
+ *         description: Inscription introuvable
+ */
+router.patch(
+  "/inscription/:inscriptionId/regenerate",
+  requireRole("organisateur", "staff"),
+  BadgeController.regenerateBadge
+);
 
 module.exports = router;

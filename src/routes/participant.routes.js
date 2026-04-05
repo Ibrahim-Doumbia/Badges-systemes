@@ -3,7 +3,7 @@ const router = express.Router();
 const ParticipantController = require("../controllers/participant.controller");
 const { authenticate, mustChangePwd, requireRole } = require("../middlewares/auth.middleware");
 
-router.use(authenticate, mustChangePwd);
+router.use(mustChangePwd);
 
 /**
  * @swagger
@@ -47,7 +47,7 @@ router.use(authenticate, mustChangePwd);
  *       403:
  *         description: Accès refusé — rôle admin ou staff requis
  */
-router.post("/", requireRole(["admin", "staff"]), ParticipantController.create);
+router.post("/", requireRole(["staff", "organisateur"]), ParticipantController.create);
 
 /**
  * @swagger
@@ -88,7 +88,7 @@ router.post("/", requireRole(["admin", "staff"]), ParticipantController.create);
  *       401:
  *         description: Non authentifié
  */
-router.get("/", ParticipantController.getAll);
+router.get("/", authenticate, ParticipantController.getAll);
 
 /**
  * @swagger
@@ -124,7 +124,7 @@ router.get("/", ParticipantController.getAll);
  *       401:
  *         description: Non authentifié
  */
-router.get("/:id", ParticipantController.getOne);
+router.get("/:id", authenticate, ParticipantController.getOne);
 
 /**
  * @swagger
@@ -170,7 +170,7 @@ router.get("/:id", ParticipantController.getOne);
  *       404:
  *         description: Participant introuvable
  */
-router.put("/:id", requireRole(["admin", "staff"]), ParticipantController.update);
+router.put("/:id", requireRole(["organisateur", "staff"]), ParticipantController.update);
 
 /**
  * @swagger
@@ -203,6 +203,6 @@ router.put("/:id", requireRole(["admin", "staff"]), ParticipantController.update
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete("/:id", requireRole("admin"), ParticipantController.delete);
+router.delete("/:id", requireRole("organisateur"), authenticate, ParticipantController.delete);
 
 module.exports = router;

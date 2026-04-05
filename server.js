@@ -29,6 +29,7 @@ const startServer = async () => {
       console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
       console.log(`📋 Health check : http://localhost:${PORT}/health`);
       console.log(`🔑 API : http://localhost:${PORT}/api`);
+      console.log(`📋 Swagger UI : http://localhost:${PORT}/api-docs`);
     });
   } catch (error) {
     console.error("❌ Impossible de démarrer le serveur :", error.message);

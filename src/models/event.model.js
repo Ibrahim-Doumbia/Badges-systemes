@@ -59,6 +59,7 @@ const Event = sequelize.define(
     },
     isActive: {
       type: DataTypes.BOOLEAN,
+      field: 'is_active',
       defaultValue: true,
     },
     // event_type_id et created_by ajoutés via associations dans index.js
