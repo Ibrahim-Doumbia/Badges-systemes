@@ -5,21 +5,24 @@ const { getPagination } = require("../utils/pagination.util");
 class ParticipantController {
   static async create(req, res) {
     try {
-      const participant = await ParticipantService.create(req.body);
-      return success(res, participant, "Participant créé", 201);
+      const userId = req.user.id;
+      const participant = await ParticipantService.create({ ...req.body, userId });
+      return success(res, participant, "Participant créé et inscrit à l'événement", 201);
     } catch (err) {
-      return error(res, err.message);
+      return error(res, err.message, err.message.includes("refusé") ? 403 : 400);
     }
   }
 
   static async getAll(req, res) {
     try {
       const { page, limit, offset } = getPagination(req.query);
-      const { search } = req.query;
-      const { count, rows } = await ParticipantService.getAll({ limit, offset, search });
+      const { search, event_id } = req.query;
+      const userId = req.user.id;
+      const isAdmin = req.user.role.name === "admin";
+      const { count, rows } = await ParticipantService.getAll({ limit, offset, search, event_id, userId, isAdmin });
       return paginated(res, rows, count, { page, limit }, "Liste des participants");
     } catch (err) {
-      return error(res, err.message);
+      return error(res, err.message, err.message.includes("refusé") ? 403 : 400);
     }
   }
 

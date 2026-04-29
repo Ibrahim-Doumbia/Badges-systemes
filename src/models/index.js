@@ -46,7 +46,7 @@ const Badge       = require("./badge.model");
 const UserEvent   = require("./user_event.model");
 
 // ─── Relations User / Role ────────────────────────────────────────────────────
-// Un utilisateur appartient à un rôle (admin ou staff)
+// Un utilisateur appartient à un rôle (admin ou organisateur)
 User.belongsTo(Role, {
   foreignKey: { name: "role_id", type: DataTypes.UUID, allowNull: false },
   as: "role",

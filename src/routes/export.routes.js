@@ -71,6 +71,8 @@ const upload = multer({
  *               format: binary
  *       401:
  *         description: Non authentifié
+ *       403:
+ *         description: Accès refusé — cet événement ne vous appartient pas
  *       404:
  *         description: Événement introuvable
  */
@@ -140,6 +142,8 @@ router.get(
  *         description: Fichier manquant ou format invalide
  *       401:
  *         description: Non authentifié
+ *       403:
+ *         description: Accès refusé — cet événement ne vous appartient pas
  *       404:
  *         description: Événement introuvable
  */
@@ -176,6 +180,8 @@ router.post(
  *               format: binary
  *       401:
  *         description: Non authentifié
+ *       403:
+ *         description: Accès refusé — cet événement ne vous appartient pas
  *       404:
  *         description: Événement introuvable ou aucun badge généré
  */

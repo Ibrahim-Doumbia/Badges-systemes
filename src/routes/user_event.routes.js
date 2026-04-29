@@ -106,7 +106,7 @@ router.post("/",              requireAdminOrEventOwner, UserEventController.assi
  *       401:
  *         description: Non authentifié
  */
-router.get("/",                                     UserEventController.getTeam);
+router.get("/",                                    requireAdminOrEventOwner,UserEventController.getTeam);
 
 /**
  * @swagger

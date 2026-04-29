@@ -8,7 +8,7 @@
  * - Inclusion des jours, catégories et rôles associés
  */
 
-const { Event, EventType, EventDay, EventRole, Category, User, UserEvent } = require("../models");
+const { Event, EventType, EventDay, EventRole, Category, Inscription, Badge, User, UserEvent } = require("../models");
 const EventRoleService = require("./event_role.service");
 const MailService = require("./mail.service");
 const { Op } = require("sequelize");
@@ -130,6 +130,112 @@ class EventService {
     // Les EventRoles sont supprimés en CASCADE (défini dans models/index.js)
     await event.destroy();
     return { message: "Événement supprimé" };
+  }
+
+  /**
+   * Tableau de bord de l'organisateur.
+   *
+   * Retourne tous les événements dont l'utilisateur est organisateur
+   * (via UserEvent avec role "Organisateur"), avec pour chacun :
+   *   - total_participants : nombre total d'inscrits
+   *   - revenue            : montant généré (somme des prix par catégorie × inscrits)
+   *   - badges_count       : nombre de badges générés
+   *   - categories_breakdown : détail par catégorie
+   *
+   * L'admin voit tous les événements de la plateforme.
+   *
+   * @param {string}  userId
+   * @param {boolean} isAdmin
+   * @returns {Promise<Array>}
+   */
+  static async getOrganizerDashboard(userId) {
+    // Récupère les IDs des événements où l'utilisateur a le rôle "Organisateur"
+    // Chaque utilisateur (y compris l'admin s'il est organisateur d'un événement)
+    // ne voit que ses propres événements — le dashboard est strictement personnel.
+    const userEvents = await UserEvent.findAll({
+      where: { user_id: userId },
+      include: [{
+        model: EventRole,
+        as: "eventRole",
+        where: { name: "Organisateur" },
+        attributes: [],
+      }],
+      attributes: ["event_id"],
+    });
+
+    const eventIds = userEvents.map((ue) => ue.event_id);
+    if (eventIds.length === 0) return [];
+
+    // Charge les événements avec catégories → inscriptions → badge
+    const events = await Event.findAll({
+      where: { id: { [Op.in]: eventIds } },
+      include: [
+        {
+          model: EventType,
+          as: "eventType",
+          attributes: ["id", "name", "label"],
+        },
+        {
+          model: Category,
+          as: "categories",
+          attributes: ["id", "name", "price"],
+          include: [{
+            model: Inscription,
+            as: "inscriptions",
+            attributes: ["id"],
+            include: [{
+              model: Badge,
+              as: "badge",
+              attributes: ["id"],
+            }],
+          }],
+        },
+      ],
+      order: [["start_date", "DESC"]],
+    });
+
+    return events.map((event) => {
+      let total_participants = 0;
+      let revenue            = 0;
+      let badges_count       = 0;
+      const categories_breakdown = [];
+
+      for (const category of event.categories || []) {
+        const inscrits       = category.inscriptions?.length || 0;
+        const price          = parseFloat(category.price) || 0;
+        const cat_revenue    = price * inscrits;
+        const cat_badges     = category.inscriptions?.filter((i) => i.badge).length || 0;
+
+        total_participants += inscrits;
+        revenue            += cat_revenue;
+        badges_count       += cat_badges;
+
+        categories_breakdown.push({
+          category_id:   category.id,
+          category_name: category.name,
+          price,
+          inscrits,
+          revenue:       Math.round(cat_revenue * 100) / 100,
+          badges:        cat_badges,
+        });
+      }
+
+      return {
+        id:                   event.id,
+        title:                event.title,
+        description:          event.description,
+        start_date:           event.start_date,
+        end_date:             event.end_date,
+        lieu:                 event.lieu,
+        isActive:             event.isActive,
+        photo_url:            event.photo_url,
+        eventType:            event.eventType,
+        total_participants,
+        revenue:              Math.round(revenue * 100) / 100,
+        badges_count,
+        categories_breakdown,
+      };
+    });
   }
 }
 

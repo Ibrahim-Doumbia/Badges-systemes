@@ -16,17 +16,31 @@ router.use(mustChangePwd);
  * @swagger
  * /participants:
  *   post:
- *     summary: Créer un participant
+ *     summary: Créer un participant et l'inscrire à un événement
  *     tags: [Participants]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/CreateParticipantRequest'
+ *             allOf:
+ *               - $ref: '#/components/schemas/CreateParticipantRequest'
+ *               - type: object
+ *                 required:
+ *                   - event_id
+ *                   - category_id
+ *                 properties:
+ *                   event_id:
+ *                     type: string
+ *                     format: uuid
+ *                     description: Identifiant de l'événement actif auquel inscrire le participant
+ *                   category_id:
+ *                     type: string
+ *                     format: uuid
+ *                     description: Identifiant de la catégorie (doit appartenir à l'événement)
  *     responses:
  *       201:
- *         description: Participant créé
+ *         description: Participant créé et inscrit à l'événement
  *         content:
  *           application/json:
  *             schema:
@@ -37,7 +51,7 @@ router.use(mustChangePwd);
  *                     data:
  *                       $ref: '#/components/schemas/Participant'
  *       400:
- *         description: Données invalides ou email déjà utilisé
+ *         description: Données invalides, événement inactif ou participant déjà inscrit
  *         content:
  *           application/json:
  *             schema:
@@ -45,9 +59,9 @@ router.use(mustChangePwd);
  *       401:
  *         description: Non authentifié
  *       403:
- *         description: Accès refusé — rôle admin ou staff requis
+ *         description: Accès refusé — l'événement ne vous appartient pas
  */
-router.post("/", requireRole(["staff", "organisateur"]), ParticipantController.create);
+router.post("/", requireRole("organisateur"), ParticipantController.create);
 
 /**
  * @swagger
@@ -71,6 +85,12 @@ router.post("/", requireRole(["staff", "organisateur"]), ParticipantController.c
  *         schema:
  *           type: string
  *         description: Recherche sur le nom, prénom, email ou organisation
+ *       - in: query
+ *         name: event_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filtrer les participants inscrits à un événement précis (obligatoire pour un organisateur)
  *     responses:
  *       200:
  *         description: Liste des participants
@@ -87,6 +107,8 @@ router.post("/", requireRole(["staff", "organisateur"]), ParticipantController.c
  *                         $ref: '#/components/schemas/Participant'
  *       401:
  *         description: Non authentifié
+ *       403:
+ *         description: Accès refusé — l'événement ne vous appartient pas
  */
 router.get("/", authenticate, ParticipantController.getAll);
 

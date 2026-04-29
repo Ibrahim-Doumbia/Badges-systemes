@@ -10,6 +10,7 @@
 require("dotenv").config();
 const app = require("./src/app");
 const { sequelize } = require("./src/models");
+const startDeactivateExpiredEventsJob = require("./src/jobs/deactivate-expired-events.job");
 
 const PORT = process.env.PORT || 3000;
 
@@ -24,6 +25,8 @@ const startServer = async () => {
     // ATTENTION : En production, utiliser des migrations plutôt que sync
     await sequelize.sync({ alter: true });
     console.log("✅ Modèles synchronisés avec la base de données");
+
+    startDeactivateExpiredEventsJob();
 
     app.listen(PORT, () => {
       console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);

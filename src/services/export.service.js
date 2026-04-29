@@ -10,7 +10,7 @@
 
 const ExcelJS  = require("exceljs");
 const archiver = require("archiver");
-const { Badge, Inscription, Participant, Event, Category } = require("../models");
+const { Badge, Inscription, Participant, Event, Category, UserEvent } = require("../models");
 const { generateBadgePDF } = require("../utils/badge-pdf.util");
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -72,10 +72,22 @@ function csvCell(value) {
 
 class ExportService {
 
-  /** Charge toutes les inscriptions d'un événement avec participant, catégorie et badge. */
-  static async _getEventData(eventId) {
+  /**
+   * Charge toutes les inscriptions d'un événement avec participant, catégorie et badge.
+   * Vérifie que l'utilisateur (userId) est créateur ou membre de l'événement,
+   * sauf si isAdmin = true (l'admin a accès à tout).
+   */
+  static async _getEventData(eventId, userId, isAdmin = false) {
     const event = await Event.findByPk(eventId);
     if (!event) throw new Error("Événement introuvable");
+
+    if (!isAdmin) {
+      const isCreator = event.created_by === userId;
+      const membership = await UserEvent.findOne({ where: { event_id: eventId, user_id: userId } });
+      if (!isCreator && !membership) {
+        throw new Error("Accès refusé : cet événement ne vous appartient pas");
+      }
+    }
 
     const inscriptions = await Inscription.findAll({
       where: { event_id: eventId },
@@ -92,8 +104,8 @@ class ExportService {
 
   // ── Export CSV ──────────────────────────────────────────────────────────────
 
-  static async exportParticipantsCSV(eventId) {
-    const { inscriptions } = await this._getEventData(eventId);
+  static async exportParticipantsCSV(eventId, userId, isAdmin = false) {
+    const { inscriptions } = await this._getEventData(eventId, userId, isAdmin);
 
     const headers = [
       "nom", "prenom", "email", "telephone",
@@ -122,8 +134,8 @@ class ExportService {
 
   // ── Export XLSX ─────────────────────────────────────────────────────────────
 
-  static async exportParticipantsXLSX(eventId) {
-    const { event, inscriptions } = await this._getEventData(eventId);
+  static async exportParticipantsXLSX(eventId, userId, isAdmin = false) {
+    const { event, inscriptions } = await this._getEventData(eventId, userId, isAdmin);
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator  = "Badges Système";
@@ -194,9 +206,17 @@ class ExportService {
    * @param {string}  filename  - Nom original du fichier (utilisé pour détecter le format)
    * @returns {{ created, skipped, errors }}
    */
-  static async importParticipants(eventId, buffer, mimetype, filename = "") {
+  static async importParticipants(eventId, buffer, mimetype, filename = "", userId, isAdmin = false) {
     const event = await Event.findByPk(eventId);
     if (!event) throw new Error("Événement introuvable");
+
+    if (!isAdmin) {
+      const isCreator = event.created_by === userId;
+      const membership = await UserEvent.findOne({ where: { event_id: eventId, user_id: userId } });
+      if (!isCreator && !membership) {
+        throw new Error("Accès refusé : cet événement ne vous appartient pas");
+      }
+    }
 
     // Récupérer les catégories de cet événement une seule fois
     const categories = await Category.findAll({ where: { event_id: eventId } });
@@ -343,8 +363,8 @@ class ExportService {
    * avec un badge pour l'événement donné.
    * @returns {Promise<Buffer>}
    */
-  static async downloadAllBadgesZIP(eventId) {
-    const { event, inscriptions } = await this._getEventData(eventId);
+  static async downloadAllBadgesZIP(eventId, userId, isAdmin = false) {
+    const { event, inscriptions } = await this._getEventData(eventId, userId, isAdmin);
 
     const withBadge = inscriptions.filter((ins) => ins.badge);
     if (withBadge.length === 0) throw new Error("Aucun badge généré pour cet événement");

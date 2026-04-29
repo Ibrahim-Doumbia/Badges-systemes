@@ -11,21 +11,26 @@ class ExportController {
     try {
       const { eventId } = req.params;
       const format      = (req.query.format || "csv").toLowerCase();
+      const userId      = req.user.id;
+      const isAdmin     = req.user.role?.name === "admin";
 
       if (format === "xlsx") {
-        const buffer = await ExportService.exportParticipantsXLSX(eventId);
+        const buffer = await ExportService.exportParticipantsXLSX(eventId, userId, isAdmin);
         res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         res.setHeader("Content-Disposition", `attachment; filename="participants-${eventId}.xlsx"`);
         return res.send(buffer);
       }
 
       // CSV par défaut
-      const csv = await ExportService.exportParticipantsCSV(eventId);
+      const csv = await ExportService.exportParticipantsCSV(eventId, userId, isAdmin);
       res.setHeader("Content-Type", "text/csv; charset=utf-8");
       res.setHeader("Content-Disposition", `attachment; filename="participants-${eventId}.csv"`);
       return res.send("\uFEFF" + csv); // BOM UTF-8 pour Excel
     } catch (err) {
-      return error(res, err.message, err.message.includes("introuvable") ? 404 : 500);
+      const status = err.message.includes("introuvable") ? 404
+                   : err.message.includes("refusé")      ? 403
+                   : 500;
+      return error(res, err.message, status);
     }
   }
 
@@ -42,8 +47,10 @@ class ExportController {
 
       const { eventId } = req.params;
       const { buffer, mimetype, originalname } = req.file;
+      const userId  = req.user.id;
+      const isAdmin = req.user.role?.name === "admin";
 
-      const results = await ExportService.importParticipants(eventId, buffer, mimetype, originalname);
+      const results = await ExportService.importParticipants(eventId, buffer, mimetype, originalname, userId, isAdmin);
 
       return res.status(200).json({
         success: true,
@@ -51,7 +58,10 @@ class ExportController {
         data: results,
       });
     } catch (err) {
-      return error(res, err.message, err.message.includes("introuvable") ? 404 : 500);
+      const status = err.message.includes("introuvable") ? 404
+                   : err.message.includes("refusé")      ? 403
+                   : 500;
+      return error(res, err.message, status);
     }
   }
 
@@ -62,13 +72,18 @@ class ExportController {
   static async downloadAllBadges(req, res) {
     try {
       const { eventId } = req.params;
-      const zipBuffer   = await ExportService.downloadAllBadgesZIP(eventId);
+      const userId      = req.user.id;
+      const isAdmin     = req.user.role?.name === "admin";
+      const zipBuffer   = await ExportService.downloadAllBadgesZIP(eventId, userId, isAdmin);
 
       res.setHeader("Content-Type", "application/zip");
       res.setHeader("Content-Disposition", `attachment; filename="badges-${eventId}.zip"`);
       return res.send(zipBuffer);
     } catch (err) {
-      return error(res, err.message, err.message.includes("introuvable") ? 404 : 500);
+      const status = err.message.includes("introuvable") ? 404
+                   : err.message.includes("refusé")      ? 403
+                   : 500;
+      return error(res, err.message, status);
     }
   }
 

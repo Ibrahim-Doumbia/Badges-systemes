@@ -71,6 +71,15 @@ class EventController {
       return error(res, err.message, 404);
     }
   }
+
+  static async getMyDashboard(req, res) {
+    try {
+      const data = await EventService.getOrganizerDashboard(req.user.id);
+      return success(res, data, "Tableau de bord récupéré");
+    } catch (err) {
+      return error(res, err.message);
+    }
+  }
 }
 
 module.exports = EventController;
