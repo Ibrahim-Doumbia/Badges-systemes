@@ -5,10 +5,11 @@ const { getPagination } = require("../utils/pagination.util");
 class BadgeController {
   /**
    * POST /api/badges/generate/:inscriptionId
+   * Body: { couleur?: string }
    */
   static async generate(req, res) {
     try {
-      const badge = await BadgeService.generate(req.params.inscriptionId, req.user.id);
+      const badge = await BadgeService.generate(req.params.inscriptionId, req.user.id, req.body.couleur);
       return success(res, badge, "Badge généré", 201);
     } catch (err) {
       const status = err.message.includes("introuvable") ? 404
@@ -72,10 +73,11 @@ class BadgeController {
 
   /**
    * PATCH /api/badges/:id/regenerate
+   * Body: { couleur?: string }
    */
   static async regenerate(req, res) {
     try {
-      const badge = await BadgeService.regenerate(req.params.id, req.user.id);
+      const badge = await BadgeService.regenerate(req.params.id, req.user.id, req.body.couleur);
       return success(res, badge, "Badge régénéré");
     } catch (err) {
       const status = err.message.includes("introuvable") ? 404
@@ -87,11 +89,28 @@ class BadgeController {
 
   /**
    * PATCH /api/badges/inscription/:inscriptionId/regenerate
+   * Body: { couleur?: string }
    */
   static async regenerateBadge(req, res) {
     try {
-      const badge = await BadgeService.regenerateBadge(req.params.inscriptionId, req.user.id);
+      const badge = await BadgeService.regenerateBadge(req.params.inscriptionId, req.user.id, req.body.couleur);
       return success(res, badge, "Badge régénéré pour l'inscription");
+    } catch (err) {
+      const status = err.message.includes("introuvable") ? 404
+                   : err.message.includes("refusé")      ? 403
+                   : 400;
+      return error(res, err.message, status);
+    }
+  }
+
+  /**
+   * PATCH /api/badges/:id/color
+   * Body: { couleur: string }
+   */
+  static async updateColor(req, res) {
+    try {
+      const badge = await BadgeService.updateColor(req.params.id, req.user.id, req.body.couleur);
+      return success(res, badge, "Couleur du badge mise à jour");
     } catch (err) {
       const status = err.message.includes("introuvable") ? 404
                    : err.message.includes("refusé")      ? 403

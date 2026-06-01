@@ -30,14 +30,22 @@ class BadgeService {
     }
   }
 
+  static _validateColor(couleur) {
+    if (couleur === undefined || couleur === null) return undefined;
+    if (!/^#[0-9A-Fa-f]{6}$/.test(couleur)) {
+      throw new Error("Format de couleur invalide. Utilisez un code hexadécimal (#RRGGBB)");
+    }
+    return couleur;
+  }
+
   /**
    * Génère un badge pour une inscription.
    * Appelé automatiquement lors de la confirmation d'une inscription.
    * @param {string}  inscription_id
    * @param {string}  userId
-   * @param {boolean} isAdmin
+   * @param {string}  [couleur]  - Couleur hex optionnelle (#RRGGBB), défaut #2563eb
    */
-  static async generate(inscription_id, userId) {
+  static async generate(inscription_id, userId, couleur) {
     const inscription = await Inscription.findByPk(inscription_id);
     if (!inscription) throw new Error("Inscription introuvable");
 
@@ -46,6 +54,7 @@ class BadgeService {
     const existing = await Badge.findOne({ where: { inscription_id } });
     if (existing) throw new Error("Un badge existe déjà pour cette inscription");
 
+    const validColor = this._validateColor(couleur);
     const qrData  = `BADGE:${inscription_id}`;
     const qr_code = await generateQRCode(qrData);
 
@@ -54,6 +63,7 @@ class BadgeService {
       qr_code,
       statut: "generated",
       date_generation: new Date(),
+      ...(validColor && { couleur: validColor }),
     });
   }
 
@@ -140,8 +150,9 @@ class BadgeService {
 
   /**
    * Régénère le QR Code d'un badge existant (en cas d'erreur).
+   * @param {string} [couleur] - Nouvelle couleur hex optionnelle (#RRGGBB)
    */
-  static async regenerate(id, userId) {
+  static async regenerate(id, userId, couleur) {
     const badge = await Badge.findByPk(id, {
       include: [{ model: Inscription, as: "inscription", attributes: ["event_id"] }],
     });
@@ -149,28 +160,41 @@ class BadgeService {
 
     await this._checkEventOwnership(badge.inscription.event_id, userId);
 
+    const validColor = this._validateColor(couleur);
     const qrData  = `BADGE:${badge.inscription_id}`;
     const qr_code = await generateQRCode(qrData);
 
-    return await badge.update({ qr_code, statut: "generated", date_generation: new Date() });
+    return await badge.update({
+      qr_code,
+      statut: "generated",
+      date_generation: new Date(),
+      ...(validColor && { couleur: validColor }),
+    });
   }
 
   /**
    * Régénère (ou crée) le badge d'une inscription via son inscriptionId.
+   * @param {string} [couleur] - Couleur hex optionnelle (#RRGGBB)
    */
-  static async regenerateBadge(inscription_id, userId) {
+  static async regenerateBadge(inscription_id, userId, couleur) {
     const inscription = await Inscription.findByPk(inscription_id);
     if (!inscription) throw new Error("Inscription introuvable");
 
     await this._checkEventOwnership(inscription.event_id, userId);
 
+    const validColor = this._validateColor(couleur);
     const qrData  = `BADGE:${inscription_id}`;
     const qr_code = await generateQRCode(qrData);
 
     const existing = await Badge.findOne({ where: { inscription_id } });
 
     if (existing) {
-      return existing.update({ qr_code, statut: "generated", date_generation: new Date() });
+      return existing.update({
+        qr_code,
+        statut: "generated",
+        date_generation: new Date(),
+        ...(validColor && { couleur: validColor }),
+      });
     }
 
     return Badge.create({
@@ -178,7 +202,28 @@ class BadgeService {
       qr_code,
       statut: "generated",
       date_generation: new Date(),
+      ...(validColor && { couleur: validColor }),
     });
+  }
+
+  /**
+   * Met à jour uniquement la couleur d'un badge existant.
+   * @param {string} id      - UUID du badge
+   * @param {string} userId
+   * @param {string} couleur - Couleur hex (#RRGGBB) obligatoire
+   */
+  static async updateColor(id, userId, couleur) {
+    const badge = await Badge.findByPk(id, {
+      include: [{ model: Inscription, as: "inscription", attributes: ["event_id"] }],
+    });
+    if (!badge) throw new Error("Badge introuvable");
+
+    await this._checkEventOwnership(badge.inscription.event_id, userId);
+
+    const validColor = this._validateColor(couleur);
+    if (!validColor) throw new Error("La couleur est obligatoire");
+
+    return await badge.update({ couleur: validColor });
   }
 }
 

@@ -33,6 +33,13 @@ const Badge = sequelize.define(
       defaultValue: DataTypes.NOW,
       allowNull: false,
     },
+    couleur: {
+      type: DataTypes.STRING(7),
+      defaultValue: "#2563eb",
+      allowNull: false,
+      validate: { is: /^#[0-9A-Fa-f]{6}$/ },
+      comment: "Couleur principale du badge (hex #RRGGBB)",
+    },
     // inscription_id ajouté via associations dans index.js
   },
   {

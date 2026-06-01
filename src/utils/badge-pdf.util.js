@@ -21,6 +21,8 @@ function generateBadgePDF({ participant, event, category, badge }) {
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
+    const primaryColor = /^#[0-9A-Fa-f]{6}$/.test(badge.couleur) ? badge.couleur : "#2563eb";
+
     const displayName =
       participant.prenom && participant.nom
         ? `${participant.prenom} ${participant.nom}`
@@ -34,7 +36,7 @@ function generateBadgePDF({ participant, event, category, badge }) {
     });
 
     // ── En-tête ─────────────────────────────────────────────────────────────
-    doc.rect(0, 0, 300, 80).fill("#2563eb");
+    doc.rect(0, 0, 300, 80).fill(primaryColor);
     doc.fillColor("#ffffff").fontSize(16).font("Helvetica-Bold")
       .text("BADGE D'ACCÈS", 20, 22, { width: 260, align: "center" });
     doc.fontSize(11).font("Helvetica")
@@ -44,7 +46,7 @@ function generateBadgePDF({ participant, event, category, badge }) {
     doc.fillColor("#1e293b").fontSize(18).font("Helvetica-Bold")
       .text(displayName, 20, 100, { width: 260, align: "center" });
 
-    doc.fillColor("#2563eb").fontSize(12).font("Helvetica-Bold")
+    doc.fillColor(primaryColor).fontSize(12).font("Helvetica-Bold")
       .text(category.name.toUpperCase(), 20, 126, { width: 260, align: "center" });
 
     // ── Séparateur ──────────────────────────────────────────────────────────

@@ -30,6 +30,18 @@ router.use(authenticate, mustChangePwd);
  *           type: string
  *           format: uuid
  *         description: UUID de l'inscription
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               couleur:
+ *                 type: string
+ *                 pattern: '^#[0-9A-Fa-f]{6}$'
+ *                 example: "#16a34a"
+ *                 description: Couleur principale du badge (#RRGGBB). Par défaut '#2563eb'.
  *     responses:
  *       201:
  *         description: Badge généré
@@ -214,7 +226,7 @@ router.patch("/:id/print", requireRole(["organisateur", "staff"]), BadgeControll
  * /badges/{id}/regenerate:
  *   patch:
  *     summary: Régénérer le QR Code d'un badge
- *     description: Génère un nouveau QR Code pour le badge et remet son statut à `generated`. L'événement doit appartenir à l'utilisateur.
+ *     description: Génère un nouveau QR Code pour le badge et remet son statut à `generated`. L'événement doit appartenir à l'utilisateur. Permet également de changer la couleur en passant `couleur` dans le body.
  *     tags: [Badges]
  *     parameters:
  *       - in: path
@@ -223,6 +235,18 @@ router.patch("/:id/print", requireRole(["organisateur", "staff"]), BadgeControll
  *         schema:
  *           type: string
  *           format: uuid
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               couleur:
+ *                 type: string
+ *                 pattern: '^#[0-9A-Fa-f]{6}$'
+ *                 example: "#7c3aed"
+ *                 description: Nouvelle couleur principale du badge (#RRGGBB). Conserve l'existante si absent.
  *     responses:
  *       200:
  *         description: Badge régénéré
@@ -257,6 +281,7 @@ router.patch("/:id/regenerate", requireRole(["organisateur", "staff"]), BadgeCon
  *       Si un badge existe pour cette inscription, son QR Code est régénéré.
  *       Si aucun badge n'existe, un nouveau badge est créé.
  *       L'inscription doit appartenir à un événement dont l'utilisateur est organisateur.
+ *       Permet également de définir ou changer la couleur via le body.
  *     tags: [Badges]
  *     parameters:
  *       - in: path
@@ -266,6 +291,18 @@ router.patch("/:id/regenerate", requireRole(["organisateur", "staff"]), BadgeCon
  *           type: string
  *           format: uuid
  *         description: UUID de l'inscription
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               couleur:
+ *                 type: string
+ *                 pattern: '^#[0-9A-Fa-f]{6}$'
+ *                 example: "#0f766e"
+ *                 description: Couleur principale du badge (#RRGGBB). Par défaut '#2563eb'.
  *     responses:
  *       200:
  *         description: Badge régénéré ou créé
@@ -290,5 +327,59 @@ router.patch(
   requireRole(["organisateur", "staff"]),
   BadgeController.regenerateBadge
 );
+
+/**
+ * @swagger
+ * /badges/{id}/color:
+ *   patch:
+ *     summary: Changer la couleur d'un badge
+ *     description: >
+ *       Met à jour la couleur principale du badge (en-tête et catégorie dans le PDF).
+ *       La couleur doit être un code hexadécimal valide au format `#RRGGBB`.
+ *       Le badge PDF généré lors du prochain téléchargement utilisera cette nouvelle couleur.
+ *     tags: [Badges]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: UUID du badge
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [couleur]
+ *             properties:
+ *               couleur:
+ *                 type: string
+ *                 pattern: '^#[0-9A-Fa-f]{6}$'
+ *                 example: "#e63946"
+ *                 description: Code couleur hexadécimal (#RRGGBB)
+ *     responses:
+ *       200:
+ *         description: Couleur mise à jour
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Badge'
+ *       400:
+ *         description: Couleur manquante ou format invalide
+ *       401:
+ *         description: Non authentifié
+ *       403:
+ *         description: Accès refusé — cet événement ne vous appartient pas
+ *       404:
+ *         description: Badge introuvable
+ */
+router.patch("/:id/color", requireRole(["organisateur", "staff"]), BadgeController.updateColor);
 
 module.exports = router;

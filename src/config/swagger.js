@@ -331,7 +331,25 @@ const options = {
             },
             statut: { type: "string", enum: ["generated", "printed"], example: "generated" },
             date_generation: { type: "string", format: "date-time" },
+            couleur: {
+              type: "string",
+              pattern: "^#[0-9A-Fa-f]{6}$",
+              example: "#2563eb",
+              description: "Couleur principale du badge (en-tête + catégorie) au format hex #RRGGBB",
+            },
             inscription_id: { type: "string", format: "uuid" },
+          },
+        },
+        BadgeColorRequest: {
+          type: "object",
+          required: ["couleur"],
+          properties: {
+            couleur: {
+              type: "string",
+              pattern: "^#[0-9A-Fa-f]{6}$",
+              example: "#e63946",
+              description: "Code couleur hexadécimal (#RRGGBB)",
+            },
           },
         },
         // ─── Réponses génériques ──────────────────────────────────────────────
